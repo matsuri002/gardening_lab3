@@ -1,6 +1,7 @@
-import TopPageContainer from "./pages/TopPage";
+// import TopPageContainer from "./pages/TopPage";
+import SelectPlanterPageContainer from "./pages/SelectPlanterPage";
 
 
 export default function App() {
-  return <TopPageContainer />
+  return <SelectPlanterPageContainer />
 }
