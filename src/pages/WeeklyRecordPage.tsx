@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   Stack,
-  Avatar,
 } from '@mui/material';
 import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
