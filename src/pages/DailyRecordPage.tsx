@@ -32,26 +32,26 @@ export default function DailyRecordPageContainer() {
         </Toolbar>
       </AppBar>
 
+      {/* TODO: 戻るボタンとタブは上部固定にする */}
+      {/* 戻るボタン押下後SelectPlanterPageに画面遷移 */}
+      <Button size='large' sx={{ p: { xs: 2.5, sm: 3 } }}> 戻る </Button>
+
+      {/* タブ */}
+      <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: 'background.paper' }}>
+        <Tabs>
+            <Tab label='本日の記録'></Tab>
+            <Tab label='1週間の記録'></Tab>
+            <Tab label='写真'></Tab>
+        </Tabs>
+      </Box>
+
       {/* メイン */}
-      <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+      <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', }}>
         <Container
           maxWidth={false}
           disableGutters
           sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}
-        >
-
-          {/* 戻るボタン押下後SelectPlanterPageに画面遷移 */}
-          <Button size='large' sx={{ p: { xs: 2.5, sm: 3 } }}> 戻る </Button>
-
-          {/* タブ */}
-          <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: 'background.paper' }}>
-            <Tabs>
-                <Tab label='本日の記録'></Tab>
-                <Tab label='1週間の記録'></Tab>
-                <Tab label='写真'></Tab>
-            </Tabs>
-          </Box>
-          
+        >          
           {/* 日付選択 */}    
           {/* TODO: デフォルトで今日の日付　栽培完了時は最終日の日付に設定 */}      
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -208,9 +208,84 @@ export default function DailyRecordPageContainer() {
                 </Stack>
               </CardContent>
             </Card>
-
-
           </Box>
+
+          {/* 土壌温度、土壌水分量の日内推移 */}
+          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+            {/* 土壌温度推移 */}
+            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+              <CardContent>
+                <Stack direction='row' spacing={2} alignItems='center'> 
+                  <Stack spacing={0.5} >                     
+                    <Typography variant='subtitle1' color='text.primary' >
+                      <ThermostatIcon /> 
+                      土壌温度の推移
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* 土壌水分量推移 */}
+            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+              <CardContent>
+                <Stack direction='row' spacing={2} alignItems='center'> 
+                  <Stack spacing={0.5} >                     
+                    <Typography variant='subtitle1' color='text.primary' >
+                      <ThermostatIcon /> 
+                      土壌水分量の推移
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Box>
+
+          {/* 室内温湿度、日射量の日内推移 */}
+          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+            {/* 室内温湿度推移 */}
+            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+              <CardContent>
+                <Stack direction='row' spacing={2} alignItems='center'> 
+                  <Stack spacing={0.5} >                     
+                    <Typography variant='subtitle1' color='text.primary' >
+                      <ThermostatIcon /> 
+                      室内温湿度の推移
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* 日射量推移 */}
+            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+              <CardContent>
+                <Stack direction='row' spacing={2} alignItems='center'> 
+                  <Stack spacing={0.5} >                     
+                    <Typography variant='subtitle1' color='text.primary' >
+                      <ThermostatIcon /> 
+                      日射量の推移
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Box>
+
+          {/* Co2濃度遷移 */}
+            <Card sx={{width: '1000px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+              <CardContent>
+                <Stack direction='row' spacing={2} alignItems='center'> 
+                  <Stack spacing={0.5} >                     
+                    <Typography variant='subtitle1' color='text.primary' >
+                      <ThermostatIcon /> 
+                      CO₂濃度の推移
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+
         </Container>
       </Box>
     </Box>
