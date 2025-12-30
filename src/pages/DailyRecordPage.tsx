@@ -51,29 +51,34 @@ export default function DailyRecordPageContainer() {
                 <Tab label='写真'></Tab>
             </Tabs>
           </Box>
-
-          {/* 日付選択 */}          
+          
+          {/* 日付選択 */}    
+          {/* TODO: デフォルトで今日の日付　栽培完了時は最終日の日付に設定 */}      
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker label="日付を選択" />
+            <DatePicker label='日付を選択' />
           </LocalizationProvider>
 
-          {/* 土壌湿度 */}
+          {/* TODO: 閲覧時の時刻を30分単位で表示　12:13分の場合は12:00時点と表示 */}
+          <Typography variant='body2' color='text.secondary'>12:30時点</Typography>            
+          {/* 土壌温度、土壌水分量、室内温湿度、日射量表示 */}
+          {/* TODO: 当日の場合は最新のデータを表示、前日以前の場合は閲覧時の時刻のデータを表示 */}
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
+            {/* 土壌湿度 */}
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">                
-                  <Avatar variant="rounded" >
+                <Stack direction='row' spacing={2} alignItems='center'>                
+                  <Avatar variant='rounded' >
                     <ThermostatIcon />
                   </Avatar>
 
                   <Stack spacing={0.5}>  
-                    <Typography variant="subtitle1" color="text.primary">
+                    <Typography variant='subtitle1' color='text.primary'>
                       土壌温度
                     </Typography>
-                    <Typography variant="h6" fontWeight={600}>
+                    <Typography variant='h6' fontWeight={600}>
                       17.5 °C
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       30分毎更新
                     </Typography>
                   </Stack>
@@ -84,19 +89,19 @@ export default function DailyRecordPageContainer() {
             {/* 土壌水分量 */}
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">                
-                  <Avatar variant="rounded" >
+                <Stack direction='row' spacing={2} alignItems='center'>                
+                  <Avatar variant='rounded' >
                     <ThermostatIcon />
                   </Avatar>
 
                   <Stack spacing={0.5}>  
-                    <Typography variant="subtitle1" color="text.primary">
+                    <Typography variant='subtitle1' color='text.primary'>
                       土壌水分量
                     </Typography>
-                    <Typography variant="h6" fontWeight={600}>
+                    <Typography variant='h6' fontWeight={600}>
                       64.3 %
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       30分毎更新
                     </Typography>
                   </Stack>
@@ -107,24 +112,24 @@ export default function DailyRecordPageContainer() {
             {/* 室内温湿度 */}
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">                
-                  <Avatar variant="rounded" >
+                <Stack direction='row' spacing={2} alignItems='center'>                
+                  <Avatar variant='rounded' >
                     <ThermostatIcon />
                   </Avatar>
 
                   <Stack spacing={0.5}>  
-                    <Typography variant="subtitle1" color="text.primary">
+                    <Typography variant='subtitle1' color='text.primary'>
                       室内温湿度
                     </Typography>
                     <Box sx={{display: 'flex', gap: 2}}>
-                      <Typography variant="h6" fontWeight={600}>
+                      <Typography variant='h6' fontWeight={600}>
                         温度 : 22.5 °C
                       </Typography>
-                      <Typography variant="h6" fontWeight={600}>
+                      <Typography variant='h6' fontWeight={600}>
                         湿度 : 63 %
                       </Typography>
                     </Box>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       30分毎更新
                     </Typography>
                   </Stack>
@@ -135,25 +140,76 @@ export default function DailyRecordPageContainer() {
             {/* 日射量 */}
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">                
-                  <Avatar variant="rounded" >
+                <Stack direction='row' spacing={2} alignItems='center'>                
+                  <Avatar variant='rounded' >
                     <ThermostatIcon />
                   </Avatar>
 
                   <Stack spacing={0.5}>  
-                    <Typography variant="subtitle1" color="text.primary">
+                    <Typography variant='subtitle1' color='text.primary'>
                       日射量
                     </Typography>
-                    <Typography variant="h6" fontWeight={600}>
+                    <Typography variant='h6' fontWeight={600}>
                       1000 lux
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       30分毎更新
                     </Typography>
                   </Stack>
                 </Stack>
               </CardContent>
             </Card>    
+          </Box>
+
+          {/* CO2濃度、EC値表示 */}
+          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+            {/* CO₂濃度 */}
+            <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+              <CardContent>
+                <Stack direction='row' spacing={2} alignItems='center'>                
+                  <Avatar variant='rounded' >
+                    <ThermostatIcon />
+                  </Avatar>
+
+                  <Stack spacing={0.5}>  
+                    <Typography variant='subtitle1' color='text.primary'>
+                      CO₂濃度
+                    </Typography>
+                    <Typography variant='h6' fontWeight={600}>
+                      440 ppm
+                    </Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      6, 12, 18, 24時 測定 
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* EC値 */}
+            <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+              <CardContent>
+                <Stack direction='row' spacing={2} alignItems='center'>                
+                  <Avatar variant='rounded' >
+                    <ThermostatIcon />
+                  </Avatar>
+
+                  <Stack spacing={0.5}>  
+                    <Typography variant='subtitle1' color='text.primary'>
+                      EC値（電気伝導率）
+                    </Typography>
+                    <Typography variant='h6' fontWeight={600}>
+                      1.2 μs/cm
+                    </Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      週1回測定 - 最終測定 : 2025年12月29日  {/* 最終測定日を表示 */}
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+
+
           </Box>
         </Container>
       </Box>
