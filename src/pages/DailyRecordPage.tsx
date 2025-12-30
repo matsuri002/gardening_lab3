@@ -87,6 +87,7 @@ export default function DailyRecordPageContainer() {
             </Card>
 
             {/* 土壌水分量 */}
+            {/* 水やりの時間（6,18時）には印をつける */}
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack direction='row' spacing={2} alignItems='center'>                
