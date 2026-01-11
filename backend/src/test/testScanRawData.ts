@@ -2,6 +2,7 @@ import "dotenv/config";
 import fs from "fs";
 import path from "path";
 import { supabase } from "../lib/supabase.js";
+import csv from "csv-parser";
 
 const ONEDRIVE_ROOT = process.env.ONEDRIVE_ROOT;
 if (!ONEDRIVE_ROOT) {
@@ -15,8 +16,6 @@ const rawDataDir = path.join(
   "komatsuna_A",
   "raw_data"
 );
-
-const PLANT_ID = "dummy-uuid-a"; // 将来的にplantsテーブルから取得する
 
 // CSV名から日付を取り出す関数
 function extractDateFromFilename(filename: string): string {
@@ -42,8 +41,62 @@ async function isCsvAlreadyImported(sourceCsvPath: string): Promise<boolean> {
   return data.length > 0;
 }
 
+// supabaseのplantsテーブルから指定した植物名に対応するidを1件取得する
+async function getPlantId(plantName: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("plants")
+    .select("id")
+    .eq("plant_name", plantName)
+    .single();
+
+  if (error || !data) {
+    throw new Error(`plant_id が取得できません: ${plantName}`);
+  }
+
+  return data.id;
+}
+
+// supabaseのdaily_environmentテーブルに1日の環境データをINSERTする
+async function insertDailyEnvironment(
+  plantId: string,
+  date: string,
+  sourceCsvPath: string
+) {
+  const { error } = await supabase.from("daily_environment").insert({
+    plant_id: plantId,
+    date,
+    source_csv_path: sourceCsvPath,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+// 指定したcsvファイルの行数をストリームで数えて返す
+async function readCsvAndCountRows(csvFilePath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    let count = 0;
+
+    fs.createReadStream(csvFilePath)
+      .pipe(csv())
+      .on("data", () => {
+        count++;
+      })
+      .on("end", () => {
+        resolve(count);
+      })
+      .on("error", reject);
+  });
+}
+
 // 列挙と判定
 async function main() {
+  const plantName = "komatsuna_A";
+
+  const plantId = await getPlantId(plantName);
+  console.log("plant_id =", plantId);
+
   const files = fs
     .readdirSync(rawDataDir)
     .filter((file) => file.endsWith(".csv"));
@@ -62,10 +115,19 @@ async function main() {
     const alreadyImported = await isCsvAlreadyImported(sourceCsvPath);
 
     if (alreadyImported) {
-      console.log(`SKIP（登録済）: ${file}`);
-    } else {
-      console.log(`NEW（未登録）: ${file} / ${date}`);
+      console.log(`SKIP（登録済み）: ${file}`);
+      continue;
     }
+
+    const fullCsvPath = path.join(rawDataDir, file);
+
+    // csvが読めるか確認
+    const rowCount = await readCsvAndCountRows(fullCsvPath);
+    console.log(`${file} 行数=${rowCount}`);
+
+    // DB に INSERT
+    await insertDailyEnvironment(plantId, date, sourceCsvPath);
+    console.log(`INSERT 完了: ${file}`);
   }
 }
 
