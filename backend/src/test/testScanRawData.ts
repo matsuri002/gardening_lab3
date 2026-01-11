@@ -15,9 +15,21 @@ const rawDataDir = path.join(
   "raw_data"
 );
 
+// CSV名から日付を取り出す関数
+function extractDateFromFilename(filename: string): string {
+  const match = filename.match(/\d{4}-\d{2}-\d{2}/);
+  if (!match) {
+    throw new Error(`日付が含まれていないCSV名: ${filename}`);
+  }
+  return match[0];
+}
+
+// raw_data を走査
 const files = fs
   .readdirSync(rawDataDir)
   .filter((file) => file.endsWith(".csv"));
 
-console.log("CSV files found:");
-files.forEach((file) => console.log(" -", file));
+files.forEach((file) => {
+  const date = extractDateFromFilename(file);
+  console.log(`${file} → ${date}`);
+});
