@@ -5,6 +5,9 @@ import { supabase } from "../lib/supabase.js";
 import csv from "csv-parser";
 import { isCsvImported, insertImportLog } from "../lib/importLog.js";
 import { extractDateFromCsv } from "../lib/parseCsvFilename.js";
+import { readCsvRows } from "../lib/readCsv.js";
+import { insertEnvironmentMeasurements } from "../lib/insertEnvironmentMeasurements.js";
+
 
 const ONEDRIVE_ROOT = process.env.ONEDRIVE_ROOT;
 if (!ONEDRIVE_ROOT) {
@@ -94,6 +97,12 @@ async function main() {
     // csvが読めるか確認
     const rowCount = await readCsvAndCountRows(fullCsvPath);
     console.log(`${file} 行数=${rowCount}`);
+
+    const rows = await readCsvRows(fullCsvPath);
+    console.log(`${file} 行数=${rows.length}`);
+
+    await insertEnvironmentMeasurements(plantId, rows);
+    console.log(`環境データ INSERT 完了: ${file}`);
 
     // DB に INSERT
     await insertDailyEnvironment(
