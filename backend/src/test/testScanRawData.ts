@@ -3,6 +3,8 @@ import fs from "fs";
 import path from "path";
 import { supabase } from "../lib/supabase.js";
 import csv from "csv-parser";
+import { isCsvImported, insertImportLog } from "../lib/importLog.js";
+import { extractDateFromCsv } from "../lib/parseCsvFilename.js";
 
 const ONEDRIVE_ROOT = process.env.ONEDRIVE_ROOT;
 if (!ONEDRIVE_ROOT) {
@@ -16,30 +18,6 @@ const rawDataDir = path.join(
   "komatsuna_A",
   "raw_data"
 );
-
-// CSV名から日付を取り出す関数
-function extractDateFromFilename(filename: string): string {
-  const match = filename.match(/\d{4}-\d{2}-\d{2}/);
-  if (!match) {
-    throw new Error(`日付が含まれていないCSV名: ${filename}`);
-  }
-  return match[0];
-}
-
-// 取り込み済判定
-async function isCsvAlreadyImported(sourceCsvPath: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("daily_environment")
-    .select("id")
-    .eq("source_csv_path", sourceCsvPath)
-    .limit(1);
-
-  if (error) {
-    throw error;
-  }
-
-  return data.length > 0;
-}
 
 // supabaseのplantsテーブルから指定した植物名に対応するidを1件取得する
 async function getPlantId(plantName: string): Promise<string> {
@@ -102,17 +80,9 @@ async function main() {
     .filter((file) => file.endsWith(".csv"));
 
   for (const file of files) {
-    const date = extractDateFromFilename(file);
+    const csvDate = extractDateFromCsv(file);
 
-    const sourceCsvPath = path.join(
-      "gardening_lab",
-      "komatsuna",
-      "komatsuna_A",
-      "raw_data",
-      file
-    );
-
-    const alreadyImported = await isCsvAlreadyImported(sourceCsvPath);
+    const alreadyImported = await isCsvImported(plantId, file);
 
     if (alreadyImported) {
       console.log(`SKIP（登録済み）: ${file}`);
@@ -126,7 +96,25 @@ async function main() {
     console.log(`${file} 行数=${rowCount}`);
 
     // DB に INSERT
-    await insertDailyEnvironment(plantId, date, sourceCsvPath);
+    await insertDailyEnvironment(
+      plantId,
+      csvDate,
+      path.join(
+        "gardening_lab",
+        "komatsuna",
+        "komatsuna_A",
+        "raw_data",
+        file
+      )
+    );
+
+    await insertImportLog(
+      plantId,
+      file,
+      csvDate,
+      rowCount
+    );
+
     console.log(`INSERT 完了: ${file}`);
   }
 }
