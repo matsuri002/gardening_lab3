@@ -37,16 +37,19 @@ async function getPlantId(plantName: string): Promise<string> {
   return data.id;
 }
 
-// supabaseのdaily_environmentテーブルに1日の環境データをINSERTする
-async function insertDailyEnvironment(
+// supabaseのdaily_environmentテーブルに1日の環境データをUPSERTする
+async function upsertDailyEnvironment(
   plantId: string,
   date: string,
   sourceCsvPath: string
 ) {
-  const { error } = await supabase.from("daily_environment").insert({
+  const { error } = await supabase.from("daily_environment").upsert({
     plant_id: plantId,
     date,
     source_csv_path: sourceCsvPath,
+  },
+  {
+    onConflict: "plant_id,date",   
   });
 
   if (error) {
@@ -104,8 +107,8 @@ async function main() {
     await insertEnvironmentMeasurements(plantId, rows);
     console.log(`環境データ INSERT 完了: ${file}`);
 
-    // DB に INSERT
-    await insertDailyEnvironment(
+    // DB に UPSERT
+    await upsertDailyEnvironment(
       plantId,
       csvDate,
       path.join(
