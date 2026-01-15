@@ -18,11 +18,12 @@ export async function insertEnvironmentMeasurements(
 
   const { error } = await supabase
     .from("environment_measurements")
-    .insert(records);
+    .upsert(records, {
+        onConflict: "plant_id,measured_at",
+        ignoreDuplicates: true, // ← 既存は無視
+      });
 
-  // 重複は unique index が防ぐ
-  // 23505 = unique_violation
-  if (error && error.code !== "23505") {
-    throw error;
-  }
+    if (error) {
+      throw error;
+    }
 }

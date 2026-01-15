@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import { supabase } from "../lib/supabase.js";
 import csv from "csv-parser";
-import { isCsvImported, insertImportLog } from "../lib/importLog.js";
 import { extractDateFromCsv } from "../lib/parseCsvFilename.js";
 import { readCsvRows } from "../lib/readCsv.js";
 import { insertEnvironmentMeasurements } from "../lib/insertEnvironmentMeasurements.js";
@@ -88,13 +87,6 @@ async function main() {
   for (const file of files) {
     const csvDate = extractDateFromCsv(file);
 
-    const alreadyImported = await isCsvImported(plantId, file);
-
-    if (alreadyImported) {
-      console.log(`SKIP（登録済み）: ${file}`);
-      continue;
-    }
-
     const fullCsvPath = path.join(rawDataDir, file);
 
     // csvが読めるか確認
@@ -105,7 +97,6 @@ async function main() {
     console.log(`${file} 行数=${rows.length}`);
 
     await insertEnvironmentMeasurements(plantId, rows);
-    console.log(`環境データ INSERT 完了: ${file}`);
 
     // DB に UPSERT
     await upsertDailyEnvironment(
@@ -120,14 +111,6 @@ async function main() {
       )
     );
 
-    await insertImportLog(
-      plantId,
-      file,
-      csvDate,
-      rowCount
-    );
-
-    console.log(`INSERT 完了: ${file}`);
   }
 }
 
