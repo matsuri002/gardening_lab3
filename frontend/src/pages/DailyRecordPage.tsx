@@ -12,8 +12,51 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import ThermostatIcon from '@mui/icons-material/Thermostat'
+import { useEffect, useState } from 'react';
+import dayjs, { Dayjs } from 'dayjs';
+import { supabase } from '../lib/supabase';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export default function DailyRecordPageContainer() {
+  
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  const [soilTemp, setSoilTemp] = useState<number | null>(null);
+  const [measuredAt, setMeasuredAt] = useState<string | null>(null);
+
+  // 1/16 23:30のデータを取得する
+  const TARGET_DATETIME = dayjs('2026-01-16T23:30:06+00:00');
+
+  const fetchSoilTemperatureAtFixedTime = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('environment_measurements')
+        .select('soil_temp, measured_at')
+        .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+        .lte('measured_at', TARGET_DATETIME.toISOString())
+        .order('measured_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+
+      console.log('取得データ:', data);
+
+      setSoilTemp(data.soil_temp);
+      setMeasuredAt(data.measured_at);
+    } catch (err) {
+      console.error('固定日時の取得に失敗:', err);
+      setSoilTemp(null);
+      setMeasuredAt(null);
+    }
+  };
+  useEffect(() => {
+    fetchSoilTemperatureAtFixedTime();
+  }, []);
+
   return (
     <Box 
       sx={{
@@ -76,10 +119,12 @@ export default function DailyRecordPageContainer() {
                       土壌温度
                     </Typography>
                     <Typography variant='h6' fontWeight={600}>
-                      17.5 °C
+                      {soilTemp !== null ? `${soilTemp} °C` : '--'}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      30分毎更新
+                      {measuredAt
+                        ? dayjs(measuredAt).tz('Asia/Tokyo').format('YYYY/MM/DD HH:mm') + ' 時点'
+                        : 'データなし'}
                     </Typography>
                   </Stack>
                 </Stack>
