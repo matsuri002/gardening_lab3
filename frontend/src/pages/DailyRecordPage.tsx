@@ -34,8 +34,14 @@ export default function DailyRecordPageContainer() {
       // JSTとしてそのまま扱う
       const base = selectedDate.format('YYYY-MM-DD');
 
-      const start = `${base} 23:30:00`;
-      const end   = `${base} 23:30:59`;
+      // 30分単位で現在時刻を作る
+      const now = dayjs();
+      const roundedMinute = now.minute() < 30 ? '00' : '30';
+      const hour = now.hour().toString().padStart(2, '0');
+      const targetTime = `${hour}:${roundedMinute}`;
+
+      const start = `${base} ${targetTime}:00`;
+      const end   = `${base} ${targetTime}:59`;
 
       const { data, error } = await supabase
         .from('environment_measurements')
