@@ -27,16 +27,22 @@ export default function DailyRecordPageContainer() {
   const [soilTemp, setSoilTemp] = useState<number | null>(null);
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
 
-  // 1/16 23:30のデータを取得する
-  const TARGET_DATETIME = dayjs('2026-01-16T23:30:06+00:00');
-
-  const fetchSoilTemperatureAtFixedTime = async () => {
+  const fetchSoilTemperatureAtFixedTime = async (
+    selectedDate: dayjs.Dayjs
+  ) => {
     try {
+      // JSTとしてそのまま扱う
+      const base = selectedDate.format('YYYY-MM-DD');
+
+      const start = `${base} 23:30:00`;
+      const end   = `${base} 23:30:59`;
+
       const { data, error } = await supabase
         .from('environment_measurements')
         .select('soil_temp, measured_at')
         .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
-        .lte('measured_at', TARGET_DATETIME.toISOString())
+        .gte('measured_at', start)
+        .lte('measured_at', end)
         .order('measured_at', { ascending: false })
         .limit(1)
         .single();
@@ -54,8 +60,9 @@ export default function DailyRecordPageContainer() {
     }
   };
   useEffect(() => {
-    fetchSoilTemperatureAtFixedTime();
-  }, []);
+    if (!selectedDate) return;
+    fetchSoilTemperatureAtFixedTime(selectedDate);
+  }, [selectedDate]);
 
   return (
     <Box 
@@ -98,11 +105,21 @@ export default function DailyRecordPageContainer() {
           {/* 日付選択 */}    
           {/* TODO: デフォルトで今日の日付　栽培完了時は最終日の日付に設定 */}      
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker label='日付を選択' />
+            <DatePicker 
+              label='日付を選択'
+              value={selectedDate}
+              onChange={(newValue) => {
+                if (!newValue) return;
+                setSelectedDate(newValue);
+              }} />
           </LocalizationProvider>
 
           {/* TODO: 閲覧時の時刻を30分単位で表示　12:13分の場合は12:00時点と表示 */}
-          <Typography variant='body2' color='text.secondary'>12:30時点</Typography>            
+          <Typography variant='body2' color='text.secondary'>
+            {measuredAt
+              ? dayjs(measuredAt.replace('+00', '')).format('YYYY/MM/DD HH:mm') + ' 時点'
+              : 'データなし'}
+            </Typography>            
           {/* 土壌温度、土壌水分量、室内温湿度、日射量表示 */}
           {/* TODO: 当日の場合は最新のデータを表示、前日以前の場合は閲覧時の時刻のデータを表示 */}
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
@@ -122,9 +139,7 @@ export default function DailyRecordPageContainer() {
                       {soilTemp !== null ? `${soilTemp} °C` : '--'}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      {measuredAt
-                        ? dayjs(measuredAt).tz('Asia/Tokyo').format('YYYY/MM/DD HH:mm') + ' 時点'
-                        : 'データなし'}
+                      30分毎更新
                     </Typography>
                   </Stack>
                 </Stack>
@@ -225,7 +240,7 @@ export default function DailyRecordPageContainer() {
                       440 ppm
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      6, 12, 18, 24時 測定 
+                      6時間毎測定 - 2026/01/17 0時時点
                     </Typography>
                   </Stack>
                 </Stack>
@@ -248,7 +263,7 @@ export default function DailyRecordPageContainer() {
                       1.2 μs/cm
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      週1回測定 - 最終測定 : 2025年12月29日  {/* 最終測定日を表示 */}
+                      週1回測定 - 最終測定 : 2025/12/29  {/* 最終測定日を表示 */}
                     </Typography>
                   </Stack>
                 </Stack>
