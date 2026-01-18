@@ -17,6 +17,14 @@ import dayjs, { Dayjs } from 'dayjs';
 import { supabase } from '../lib/supabase';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from 'recharts';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -39,9 +47,15 @@ export default function DailyRecordPageContainer() {
     light: null,
   });
 
+  type SoilTempPoint = {
+    time: string;
+    value: number;
+  };
+
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
   const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
+  const [soilTempDaily, setSoilTempDaily] = useState<SoilTempPoint[]>([]);
 
   const fetchEnvironmentData = async (
     selectedDate: dayjs.Dayjs
@@ -118,9 +132,43 @@ export default function DailyRecordPageContainer() {
       console.error('環境データ取得失敗:', err);
     }
   };
+
+  const fetchSoilTempDaily = async (selectedDate: dayjs.Dayjs) => {
+    try {
+      const base = selectedDate.format('YYYY-MM-DD');
+
+      const { data, error } = await supabase
+        .from('environment_measurements')
+        .select('measured_at, soil_temp')
+        .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+        .gte('measured_at', `${base} 00:00:00`)
+        .lte('measured_at', `${base} 23:59:59`)
+        .order('measured_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        setSoilTempDaily([]);
+        return;
+      }
+
+      const formatted = data.map((row) => ({
+        time: dayjs(row.measured_at.replace('+00', '')).format('HH:mm'),
+        value: row.soil_temp,
+      }));
+
+      setSoilTempDaily(formatted);
+
+    } catch (err) {
+      console.error('土壌温度（日内推移）取得失敗:', err);
+      setSoilTempDaily([]);
+    }
+  };
+
   useEffect(() => {
     if (!selectedDate) return;
     fetchEnvironmentData(selectedDate);
+    fetchSoilTempDaily(selectedDate)
   }, [selectedDate]);
 
   return (
@@ -343,12 +391,28 @@ export default function DailyRecordPageContainer() {
             {/* 土壌温度推移 */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
-                      土壌温度の推移
+                      土壌温度の推移                      
                     </Typography>
+                    {soilTempDaily.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          データがありません
+                        </Typography>
+                      ) : (
+                        <Box sx={{ width: '100%', height: 250 }}>
+                          <ResponsiveContainer width="100%" height={250}>
+                            <LineChart data={soilTempDaily}>
+                              <XAxis dataKey="time" />
+                              <YAxis unit="°C" />
+                              <Tooltip />
+                              <Line dataKey="value" strokeWidth={2} dot={false} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </Box>
+                      )}
                   </Stack>
                 </Stack>
               </CardContent>
