@@ -26,6 +26,7 @@ export default function DailyRecordPageContainer() {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [soilTemp, setSoilTemp] = useState<number | null>(null);
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
+  const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
 
   const fetchSoilTemperatureAtFixedTime = async (
     selectedDate: dayjs.Dayjs
@@ -42,9 +43,10 @@ export default function DailyRecordPageContainer() {
 
       if (isToday) {
         query = query
+          .gte('measured_at', `${base} 00:00:00`)
           .lte('measured_at', `${base} 23:59:59`)
-          .order('measured_at', { ascending: false})
-          .limit(1)
+          .order('measured_at', { ascending: false })
+          .limit(1);
       } else {
         // 過去日　閲覧時刻のデータを表示
         // 30分単位で現在時刻を作る
@@ -63,12 +65,22 @@ export default function DailyRecordPageContainer() {
           .limit(1);
       }
 
-      const { data, error } = await query.single();
+      const { data, error } = await query;
       if (error) throw error;
 
-      setSoilTemp(data.soil_temp);
-      setMeasuredAt(data.measured_at);
-      
+      if (!data || data.length === 0) {
+        // 今日だがデータがまだない
+        setSoilTemp(null);
+        setMeasuredAt(null);
+        setNoDataMessage('本日のデータはありません');
+        return;
+      }
+
+      const record = data[0];
+      setSoilTemp(record.soil_temp);
+      setMeasuredAt(record.measured_at);
+      setNoDataMessage(null);
+
     } catch (err) {
       console.error('土壌温度取得失敗:', err);
       setSoilTemp(null);
@@ -132,9 +144,17 @@ export default function DailyRecordPageContainer() {
 
           {/* TODO: 閲覧時の時刻を30分単位で表示　12:13分の場合は12:00時点と表示 */}
           <Typography variant='body2' color='text.secondary'>
-            {measuredAt
-              ? dayjs(measuredAt.replace('+00', '')).format('YYYY/MM/DD HH:mm') + ' 時点'
-              : 'データなし'}
+            {noDataMessage ? (
+              <Typography color="text.secondary">
+                {noDataMessage}
+              </Typography>
+            ) : (
+              measuredAt && (
+                <Typography variant="body2" color="text.secondary">
+                  {dayjs(measuredAt.replace('+00', '')).format('YYYY/MM/DD HH:mm')} 時点
+                </Typography>
+              )
+            )}
             </Typography>            
           {/* 土壌温度、土壌水分量、室内温湿度、日射量表示 */}
           {/* TODO: 当日の場合は最新のデータを表示、前日以前の場合は閲覧時の時刻のデータを表示 */}
