@@ -23,12 +23,27 @@ dayjs.extend(timezone);
 
 export default function DailyRecordPageContainer() {
   
+  type EnvironmentData = {
+    soilTemp: number | null;
+    soilMoisture: number | null;
+    roomTemp: number | null;
+    roomHumid: number | null;
+    light: number | null;
+  };
+
+  const [envData, setEnvData] = useState<EnvironmentData>({
+    soilTemp: null,
+    soilMoisture: null,
+    roomTemp: null,
+    roomHumid: null,
+    light: null,
+  });
+
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
-  const [soilTemp, setSoilTemp] = useState<number | null>(null);
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
   const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
 
-  const fetchSoilTemperatureAtFixedTime = async (
+  const fetchEnvironmentData = async (
     selectedDate: dayjs.Dayjs
   ) => {
     try {
@@ -38,7 +53,14 @@ export default function DailyRecordPageContainer() {
 
       let query = supabase 
         .from('environment_measurements')
-        .select('soil_temp, measured_at')
+        .select(`
+          measured_at,
+          soil_temp,
+          soil_moisture,
+          room_temp,
+          room_humid,
+          light
+        `)
         .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
 
       if (isToday) {
@@ -55,12 +77,9 @@ export default function DailyRecordPageContainer() {
         const hour = now.hour().toString().padStart(2, '0');
         const targetTime = `${hour}:${roundedMinute}`;
 
-        const start = `${base} ${targetTime}:00`;
-        const end   = `${base} ${targetTime}:59`;
-
         query = query
-          .gte('measured_at', start)
-          .lte('measured_at', end)
+          .gte('measured_at', `${base} ${targetTime}:00`)
+          .lte('measured_at', `${base} ${targetTime}:59`)
           .order('measured_at', { ascending: false })
           .limit(1);
       }
@@ -70,26 +89,38 @@ export default function DailyRecordPageContainer() {
 
       if (!data || data.length === 0) {
         // 今日だがデータがまだない
-        setSoilTemp(null);
+        setEnvData({
+          soilTemp: null,
+          soilMoisture: null,
+          roomTemp: null,
+          roomHumid: null,
+          light: null,
+        });
         setMeasuredAt(null);
-        setNoDataMessage('本日のデータはありません');
+        setNoDataMessage(
+          isToday ? '本日のデータはありません' : '該当時刻のデータはありません'
+        );
         return;
       }
 
       const record = data[0];
-      setSoilTemp(record.soil_temp);
+      setEnvData({
+        soilTemp: record.soil_temp,
+        soilMoisture: record.soil_moisture,
+        roomTemp: record.room_temp,
+        roomHumid: record.room_humid,
+        light: record.light,
+      });
       setMeasuredAt(record.measured_at);
       setNoDataMessage(null);
 
     } catch (err) {
-      console.error('土壌温度取得失敗:', err);
-      setSoilTemp(null);
-      setMeasuredAt(null);
+      console.error('環境データ取得失敗:', err);
     }
   };
   useEffect(() => {
     if (!selectedDate) return;
-    fetchSoilTemperatureAtFixedTime(selectedDate);
+    fetchEnvironmentData(selectedDate);
   }, [selectedDate]);
 
   return (
@@ -172,7 +203,7 @@ export default function DailyRecordPageContainer() {
                       土壌温度
                     </Typography>
                     <Typography variant='h6' fontWeight={600}>
-                      {soilTemp !== null ? `${soilTemp} °C` : '--'}
+                      {envData.soilTemp !== null ? `${envData.soilTemp} ` : '--'}°C
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
                       30分毎更新
@@ -196,7 +227,7 @@ export default function DailyRecordPageContainer() {
                       土壌水分量
                     </Typography>
                     <Typography variant='h6' fontWeight={600}>
-                      64.3 %
+                       {envData.soilMoisture !== null ? `${envData.soilMoisture} ` : '--'}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
                       30分毎更新
@@ -220,10 +251,10 @@ export default function DailyRecordPageContainer() {
                     </Typography>
                     <Box sx={{display: 'flex', gap: 2}}>
                       <Typography variant='h6' fontWeight={600}>
-                        温度 : 22.5 °C
+                        温度 : {envData.roomTemp ?? '--'} °C
                       </Typography>
                       <Typography variant='h6' fontWeight={600}>
-                        湿度 : 63 %
+                        湿度 : {envData.roomHumid ?? '--'} %
                       </Typography>
                     </Box>
                     <Typography variant='body2' color='text.secondary'>
@@ -247,7 +278,7 @@ export default function DailyRecordPageContainer() {
                       日射量
                     </Typography>
                     <Typography variant='h6' fontWeight={600}>
-                      1000 lux
+                      {envData.light !== null ? `${envData.light} ` : '--'}lux
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
                       30分毎更新
