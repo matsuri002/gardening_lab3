@@ -33,34 +33,44 @@ export default function DailyRecordPageContainer() {
     try {
       // JSTとしてそのまま扱う
       const base = selectedDate.format('YYYY-MM-DD');
+      const isToday = selectedDate.isSame(dayjs(), 'day');
 
-      // 30分単位で現在時刻を作る
-      const now = dayjs();
-      const roundedMinute = now.minute() < 30 ? '00' : '30';
-      const hour = now.hour().toString().padStart(2, '0');
-      const targetTime = `${hour}:${roundedMinute}`;
-
-      const start = `${base} ${targetTime}:00`;
-      const end   = `${base} ${targetTime}:59`;
-
-      const { data, error } = await supabase
+      let query = supabase 
         .from('environment_measurements')
         .select('soil_temp, measured_at')
         .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
-        .gte('measured_at', start)
-        .lte('measured_at', end)
-        .order('measured_at', { ascending: false })
-        .limit(1)
-        .single();
 
+      if (isToday) {
+        query = query
+          .lte('measured_at', `${base} 23:59:59`)
+          .order('measured_at', { ascending: false})
+          .limit(1)
+      } else {
+        // 過去日　閲覧時刻のデータを表示
+        // 30分単位で現在時刻を作る
+        const now = dayjs();
+        const roundedMinute = now.minute() < 30 ? '00' : '30';
+        const hour = now.hour().toString().padStart(2, '0');
+        const targetTime = `${hour}:${roundedMinute}`;
+
+        const start = `${base} ${targetTime}:00`;
+        const end   = `${base} ${targetTime}:59`;
+
+        query = query
+          .gte('measured_at', start)
+          .lte('measured_at', end)
+          .order('measured_at', { ascending: false })
+          .limit(1);
+      }
+
+      const { data, error } = await query.single();
       if (error) throw error;
-
-      console.log('取得データ:', data);
 
       setSoilTemp(data.soil_temp);
       setMeasuredAt(data.measured_at);
+      
     } catch (err) {
-      console.error('固定日時の取得に失敗:', err);
+      console.error('土壌温度取得失敗:', err);
       setSoilTemp(null);
       setMeasuredAt(null);
     }
