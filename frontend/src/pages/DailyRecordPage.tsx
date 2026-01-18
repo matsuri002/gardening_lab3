@@ -24,6 +24,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
 } from 'recharts';
 
 dayjs.extend(utc);
@@ -47,15 +48,30 @@ export default function DailyRecordPageContainer() {
     light: null,
   });
 
-  type SoilTempPoint = {
+  type DailyDataPoint = {
     time: string;
     value: number;
+  };
+
+  type EnvironmentRow = {
+    measured_at: string;
+    soil_temp: number | null;
+    soil_moisture: number | null;
+    room_temp: number | null;
+    room_humid: number | null;
+    light: number | null;
   };
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
   const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
-  const [soilTempDaily, setSoilTempDaily] = useState<SoilTempPoint[]>([]);
+  const [soilTempDaily, setSoilTempDaily] = useState<DailyDataPoint[]>([]);
+  const [soilMoistureDaily, setSoilMoistureDaily] = useState<DailyDataPoint[]>([]);
+  const [roomTempDaily, setRoomTempDaily] = useState<DailyDataPoint[]>([]);
+  const [roomHumidDaily, setRoomHumidDaily] = useState<DailyDataPoint[]>([]);
+  const [lightDaily, setLightDaily] = useState<DailyDataPoint[]>([]);
+
+  
 
   const fetchEnvironmentData = async (
     selectedDate: dayjs.Dayjs
@@ -133,43 +149,68 @@ export default function DailyRecordPageContainer() {
     }
   };
 
-  const fetchSoilTempDaily = async (selectedDate: dayjs.Dayjs) => {
+  const fetchDailySensorData = async (
+    selectedDate: dayjs.Dayjs,
+    column: 'soil_temp' | 'soil_moisture' | 'room_temp' | 'room_humid' | 'light',
+    setter: React.Dispatch<React.SetStateAction<DailyDataPoint[]>>
+  ) => {
     try {
       const base = selectedDate.format('YYYY-MM-DD');
 
       const { data, error } = await supabase
         .from('environment_measurements')
-        .select('measured_at, soil_temp')
+        .select(`measured_at, ${column}`)
         .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
         .gte('measured_at', `${base} 00:00:00`)
         .lte('measured_at', `${base} 23:59:59`)
-        .order('measured_at', { ascending: true });
+        .order('measured_at', { ascending: true }) as {
+          data: EnvironmentRow[] | null;
+          error: any;
+        };
 
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        setSoilTempDaily([]);
+        setter([]);
         return;
       }
 
-      const formatted = data.map((row) => ({
-        time: dayjs(row.measured_at.replace('+00', '')).format('HH:mm'),
-        value: row.soil_temp,
-      }));
+      const formatted = data
+        .filter((row) => row[column] !== null)
+        .map((row) => ({
+          time: dayjs(row.measured_at.replace('+00', '')).format('HH:mm'),
+          value: row[column] as number,
+        }));
 
-      setSoilTempDaily(formatted);
-
+      setter(formatted);
     } catch (err) {
-      console.error('土壌温度（日内推移）取得失敗:', err);
-      setSoilTempDaily([]);
+      console.error(`日内推移取得失敗 (${column}):`, err);
+      setter([]);
     }
   };
 
   useEffect(() => {
     if (!selectedDate) return;
     fetchEnvironmentData(selectedDate);
-    fetchSoilTempDaily(selectedDate)
+    fetchDailySensorData(selectedDate, 'soil_temp', setSoilTempDaily);
+    fetchDailySensorData(selectedDate, 'soil_moisture', setSoilMoistureDaily);
+    fetchDailySensorData(selectedDate, 'room_temp', setRoomTempDaily);
+    fetchDailySensorData(selectedDate, 'room_humid', setRoomHumidDaily);
+    fetchDailySensorData(selectedDate, 'light', setLightDaily);
   }, [selectedDate]);
+
+  // 同じ時刻の温度と湿度を1レコードにまとめる
+  const roomTHDaily = roomTempDaily.map((tempRow) => {
+  const humidRow = roomHumidDaily.find(
+    (h) => h.time === tempRow.time
+  );
+
+  return {
+    time: tempRow.time,
+    temp: tempRow.value,
+    humid: humidRow ? humidRow.value : null,
+  };
+});
 
   return (
     <Box 
@@ -421,12 +462,28 @@ export default function DailyRecordPageContainer() {
             {/* 土壌水分量推移 */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}>
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
                       土壌水分量の推移
                     </Typography>
+                    {soilMoistureDaily.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        データがありません
+                      </Typography>
+                    ) : (
+                      <Box sx={{ width: '100%', height: 250 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={soilMoistureDaily}>
+                            <XAxis dataKey="time" />
+                            <YAxis unit="" />
+                            <Tooltip />
+                            <Line dataKey="value" dot={false} strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </Box>
+                    )}
                   </Stack>
                 </Stack>
               </CardContent>
@@ -438,12 +495,47 @@ export default function DailyRecordPageContainer() {
             {/* 室内温湿度推移 */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}>
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
                       室内温湿度の推移
                     </Typography>
+                    {/* 室内温湿度 */}
+                    {roomTHDaily.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        データがありません
+                      </Typography>
+                    ) : (
+                      <Box sx={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={roomTHDaily}>
+                            <XAxis dataKey="time" />
+
+                            <YAxis yAxisId="left" unit="°C" />
+                            <YAxis yAxisId="right" orientation="right" unit="%" />
+
+                            <Tooltip />
+                            <Legend />
+
+                            <Line
+                              yAxisId="left"
+                              dataKey="temp"
+                              dot={false}
+                              strokeWidth={2}
+                              name="室内温度"
+                            />
+                            <Line
+                              yAxisId="right"
+                              dataKey="humid"
+                              dot={false}
+                              strokeWidth={2}
+                              name="室内湿度"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </Box>
+                    )}
                   </Stack>
                 </Stack>
               </CardContent>
@@ -452,12 +544,28 @@ export default function DailyRecordPageContainer() {
             {/* 日射量推移 */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}>
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
                       日射量の推移
                     </Typography>
+                    {lightDaily.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        データがありません
+                      </Typography>
+                    ) : (
+                      <Box sx={{ width: '100%', height: 250 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={lightDaily}>
+                            <XAxis dataKey="time" />
+                            <YAxis unit="lux" />
+                            <Tooltip />
+                            <Line dataKey="value" dot={false} strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </Box>
+                    )}
                   </Stack>
                 </Stack>
               </CardContent>
