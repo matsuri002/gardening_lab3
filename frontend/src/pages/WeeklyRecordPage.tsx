@@ -5,14 +5,82 @@ import {
   Card,
   CardContent,
   Stack,
-} from '@mui/material';
+  } from '@mui/material';
 import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import ThermostatIcon from '@mui/icons-material/Thermostat'
+import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } from 'recharts';
 
 export default function WeeklyRecordPageContainer() {
+
+  type WeeklySoilTemp = {
+    date: string; 
+    max: number;
+    min: number;
+    avg: number;
+  };
+
+  const [endDate, setEndDate] = useState<dayjs.Dayjs>(dayjs());
+  const [soilTempWeekly, setSoilTempWeekly] = useState<WeeklySoilTemp[]>([]);
+
+  const fetchSoilTempWeekly = async (endDate: dayjs.Dayjs) => {
+    try {
+      const startDate = endDate.subtract(6, 'day');
+
+      const { data, error } = await supabase
+        .from('environment_measurements')
+        .select('measured_at, soil_temp')
+        .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+        .gte('measured_at', startDate.format('YYYY-MM-DD 00:00:00'))
+        .lte('measured_at', endDate.format('YYYY-MM-DD 23:59:59'))
+        .order('measured_at', { ascending: true });
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        setSoilTempWeekly([]);
+        return;
+      }
+
+      // 日付ごとにまとめる
+      const grouped: Record<string, number[]> = {};
+
+      data.forEach((row) => {
+        if (row.soil_temp === null) return;
+
+        const date = dayjs(row.measured_at.replace('+00', '')).format('YYYY-MM-DD');
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(row.soil_temp);
+      });
+
+      const formatted: WeeklySoilTemp[] = Object.entries(grouped).map(
+        ([date, values]) => ({
+          date: dayjs(date).format('MM/DD'),
+          max: Math.max(...values),
+          min: Math.min(...values),
+          avg:
+            Math.round(
+              (values.reduce((a, b) => a + b, 0) / values.length) * 10
+            ) / 10,
+        })
+      );
+
+     setSoilTempWeekly(formatted);
+    } catch (err) {
+      console.error('土壌温度（週間）取得失敗:', err);
+      setSoilTempWeekly([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchSoilTempWeekly(endDate);
+  }, [endDate]);
+
+
   return (
     <Box 
       sx={{
@@ -55,10 +123,19 @@ export default function WeeklyRecordPageContainer() {
           {/* TODO: デフォルトで今日の日付から7日前までのデータを表示 */}      
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             {/* 日付を選択し、選択した日付から7日前までのデータを表示する */}
-            <DatePicker label='最終日を選択' />
+            <DatePicker
+              label="最終日を選択"
+              value={endDate}
+              onChange={(newValue) => {
+                if (newValue) setEndDate(newValue);
+              }}
+            />
           </LocalizationProvider>
           <Typography variant='subtitle1' color='text.primary'>過去7日間の推移</Typography>  
-          <Typography variant='body2' color='text.secondary'>12月23日～12月30日</Typography> 
+          <Typography variant="body2" color="text.secondary">
+            {endDate.subtract(6, 'day').format('MM/DD')}～
+            {endDate.format('MM/DD')}
+          </Typography>
 
           {/* TODO: 各グラフにスクロールバーを付ける */}
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
@@ -66,12 +143,33 @@ export default function WeeklyRecordPageContainer() {
             {/* 1日の最高、最低、平均温度を7日間表示する */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
                       土壌温度の推移
                     </Typography>
+                    {soilTempWeekly.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        データがありません
+                      </Typography>
+                    ) : (
+                      <Box sx={{ width: '100%', height: 250 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={soilTempWeekly}>
+                            <XAxis dataKey="date" />
+                            <YAxis unit="°C" />
+                            <Tooltip />
+                            <Legend />
+
+                            <Line dataKey="max" name="最高温度" dot={false} strokeWidth={2} />
+                            <Line dataKey="avg" name="平均温度" dot={false} strokeWidth={2} />
+                            <Line dataKey="min" name="最低温度" dot={false} strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </Box>
+                    )}
+
                   </Stack>
                 </Stack>
               </CardContent>
