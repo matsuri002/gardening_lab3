@@ -18,68 +18,76 @@ import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } f
 
 export default function WeeklyRecordPageContainer() {
 
-  type WeeklySoilTemp = {
-    date: string; 
-    max: number;
+  type WeeklyStatPoint = {
+    date: string;
+    max: number;    
     min: number;
     avg: number;
   };
 
   const [endDate, setEndDate] = useState<dayjs.Dayjs>(dayjs());
-  const [soilTempWeekly, setSoilTempWeekly] = useState<WeeklySoilTemp[]>([]);
+  const [soilTempWeekly, setSoilTempWeekly] = useState<WeeklyStatPoint[]>([]);
+  const [roomTempWeekly, setRoomTempWeekly] = useState<WeeklyStatPoint[]>([]);
+  const [roomHumidWeekly, setRoomHumidWeekly] = useState<WeeklyStatPoint[]>([]);
+  const [soilMoistureWeekly, setSoilMoistureWeekly] = useState<WeeklyStatPoint[]>([]);
+  const [lightWeekly, setLightWeekly] = useState<WeeklyStatPoint[]>([]);
 
-  const fetchSoilTempWeekly = async (endDate: dayjs.Dayjs) => {
-    try {
-      const startDate = endDate.subtract(6, 'day');
+  const fetchWeeklyStats = async (
+    endDate: dayjs.Dayjs,
+    column:
+      | 'soil_temp'
+      | 'room_temp'
+      | 'room_humid'
+      | 'soil_moisture'
+      | 'light'
+  ): Promise<WeeklyStatPoint[]> => {
+    const end = endDate.endOf('day');
+    const start = end.subtract(6, 'day').startOf('day');
 
-      const { data, error } = await supabase
-        .from('environment_measurements')
-        .select('measured_at, soil_temp')
-        .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
-        .gte('measured_at', startDate.format('YYYY-MM-DD 00:00:00'))
-        .lte('measured_at', endDate.format('YYYY-MM-DD 23:59:59'))
-        .order('measured_at', { ascending: true });
+    const { data, error } = await supabase
+      .from('environment_measurements')
+      .select(`measured_at, ${column}`)
+      .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+      .gte('measured_at', start.format('YYYY-MM-DD HH:mm:ss'))
+      .lte('measured_at', end.format('YYYY-MM-DD HH:mm:ss'));
 
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        setSoilTempWeekly([]);
-        return;
-      }
+    if (error || !data) return [];
 
-      // 日付ごとにまとめる
-      const grouped: Record<string, number[]> = {};
+    // 日付ごとにまとめる
+    const grouped: Record<string, number[]> = {};
 
-      data.forEach((row) => {
-        if (row.soil_temp === null) return;
+    data.forEach((row: any) => {
+      if (row[column] == null) return;
 
-        const date = dayjs(row.measured_at.replace('+00', '')).format('YYYY-MM-DD');
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push(row.soil_temp);
-      });
+      const date = dayjs(row.measured_at.replace('+00', '')).format('MM/DD');
+      if (!grouped[date]) grouped[date] = [];
+      grouped[date].push(Number(row[column]));
+    });
 
-      const formatted: WeeklySoilTemp[] = Object.entries(grouped).map(
-        ([date, values]) => ({
-          date: dayjs(date).format('MM/DD'),
-          max: Math.max(...values),
-          min: Math.min(...values),
-          avg:
-            Math.round(
-              (values.reduce((a, b) => a + b, 0) / values.length) * 10
-            ) / 10,
-        })
-      );
+    return Object.entries(grouped).map(([date, values]) => {
+      const max = Math.max(...values);
+      const min = Math.min(...values);
+      const avg =
+        values.reduce((a, b) => a + b, 0) / values.length;
 
-     setSoilTempWeekly(formatted);
-    } catch (err) {
-      console.error('土壌温度（週間）取得失敗:', err);
-      setSoilTempWeekly([]);
-    }
+      return {
+        date,
+        max: Number(max.toFixed(1)),
+        avg: Number(avg.toFixed(1)),
+        min: Number(min.toFixed(1)),
+      };
+    });
   };
 
   useEffect(() => {
-    fetchSoilTempWeekly(endDate);
-  }, [endDate]);
+    if (!endDate) return;
 
+    fetchWeeklyStats(endDate, 'soil_temp').then(setSoilTempWeekly);
+    fetchWeeklyStats(endDate, 'room_temp').then(setRoomTempWeekly);
+    fetchWeeklyStats(endDate, 'room_humid').then(setRoomHumidWeekly);
+    fetchWeeklyStats(endDate, 'soil_moisture').then(setSoilMoistureWeekly);
+    fetchWeeklyStats(endDate, 'light').then(setLightWeekly);
+  }, [endDate]);
 
   return (
     <Box 
@@ -154,22 +162,18 @@ export default function WeeklyRecordPageContainer() {
                         データがありません
                       </Typography>
                     ) : (
-                      <Box sx={{ width: '100%', height: 250 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={soilTempWeekly}>
-                            <XAxis dataKey="date" />
-                            <YAxis unit="°C" />
-                            <Tooltip />
-                            <Legend />
-
-                            <Line dataKey="max" name="最高温度" dot={false} strokeWidth={2} />
-                            <Line dataKey="avg" name="平均温度" dot={false} strokeWidth={2} />
-                            <Line dataKey="min" name="最低温度" dot={false} strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </Box>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={soilTempWeekly}>
+                          <XAxis dataKey="date" />
+                          <YAxis unit="°C" />
+                          <Tooltip />
+                          <Legend />
+                          <Line dataKey="max" name="最高温度"  strokeWidth={2} />
+                          <Line dataKey="avg" name="平均温度"  strokeWidth={2} />
+                          <Line dataKey="min" name="最低温度"  strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
                     )}
-
                   </Stack>
                 </Stack>
               </CardContent>
@@ -177,15 +181,32 @@ export default function WeeklyRecordPageContainer() {
 
             {/* 土壌水分量7日間推移 */}
             {/* 表示方法（アナログ値or%）は要検討 */}
-            {/* 単純に数値を並べる 波打つようなグラフを想定 */}
+            {/* 1日の最高、最低、平均温度を7日間表示する */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
                       土壌水分量の推移
                     </Typography>
+                      {soilMoistureWeekly.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          データがありません
+                        </Typography>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={250}>
+                          <LineChart data={soilMoistureWeekly}>
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line dataKey="max" name="最大値" strokeWidth={2} />
+                            <Line dataKey="avg" name="平均値" strokeWidth={2} />
+                            <Line dataKey="min" name="最小値" strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      )}                  
                   </Stack>
                 </Stack>
               </CardContent>
@@ -193,32 +214,99 @@ export default function WeeklyRecordPageContainer() {
           </Box>
 
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
-            {/* 室内温湿度7日間推移 */}
+            {/* 室内温度7日間推移 */}
             {/* 1日の最高、最低、平均温度を7日間表示する */}
-            {/* TODO: デフォルトは両方とも表示し、室温だけ、湿度だけを表示できるようにする */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
-                      室内温湿度の推移
+                      室内温度の推移
                     </Typography>
+                    {roomTempWeekly.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          データがありません
+                        </Typography>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={250}>
+                          <LineChart data={roomTempWeekly}>
+                            <XAxis dataKey="date" />
+                            <YAxis unit="°C" />
+                            <Tooltip />
+                            <Legend />
+                            <Line dataKey="max" name="最高温度"  strokeWidth={2} />
+                            <Line dataKey="avg" name="平均温度"  strokeWidth={2} />
+                            <Line dataKey="min" name="最低温度"  strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      )}
                   </Stack>
                 </Stack>
               </CardContent>
             </Card>
 
+            {/* 室内湿度7日間推移 */}
+            {/* 1日の最高、最低、平均温度を7日間表示する */}
+            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+              <CardContent>
+                <Stack spacing={1} sx={{ width: '100%' }}> 
+                  <Stack spacing={0.5} >                     
+                    <Typography variant='subtitle1' color='text.primary' >
+                      <ThermostatIcon /> 
+                      室内湿度の推移
+                    </Typography>
+                    {roomHumidWeekly.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          データがありません
+                        </Typography>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={250}>
+                          <LineChart data={roomHumidWeekly}>
+                            <XAxis dataKey="date" />
+                            <YAxis unit="%" />
+                            <Tooltip />
+                            <Legend />
+                            <Line dataKey="max" name="最高湿度"  strokeWidth={2} />
+                            <Line dataKey="avg" name="平均湿度"  strokeWidth={2} />
+                            <Line dataKey="min" name="最低湿度"  strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      )}
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Box>
+
+          <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* 日射量7日間推移 */}
             {/* 1日の最高、最低、平均日射量を7日間表示する */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
                       日射量の推移
                     </Typography>
+                    {lightWeekly.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          データがありません
+                        </Typography>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={250}>
+                          <LineChart data={lightWeekly}>
+                            <XAxis dataKey="date" />
+                            <YAxis unit="lux" />
+                            <Tooltip />
+                            <Legend />
+                            <Line dataKey="max" name="最大値" strokeWidth={2} />
+                            <Line dataKey="avg" name="平均値" strokeWidth={2} />
+                            <Line dataKey="min" name="最小値" strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      )}
                   </Stack>
                 </Stack>
               </CardContent>
@@ -230,7 +318,7 @@ export default function WeeklyRecordPageContainer() {
             {/* 単純に数値を並べる 波打つようなグラフを想定 */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
@@ -245,7 +333,7 @@ export default function WeeklyRecordPageContainer() {
             {/* ECのみ7日間ではなく全てのデータを表示する */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
+                <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
                     <Typography variant='subtitle1' color='text.primary' >
                       <ThermostatIcon /> 
