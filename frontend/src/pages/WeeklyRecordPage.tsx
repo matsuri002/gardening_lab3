@@ -11,6 +11,10 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import ThermostatIcon from '@mui/icons-material/Thermostat'
+import SunnyIcon from '@mui/icons-material/Sunny';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import BoltIcon from '@mui/icons-material/Bolt';
+import SpeedIcon from '@mui/icons-material/Speed';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -152,11 +156,11 @@ export default function WeeklyRecordPageContainer() {
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      土壌温度の推移
-                    </Typography>
+                  <Stack spacing={0.5} >  
+                    <Stack direction="row"  alignItems="center">               
+                      <ThermostatIcon sx={{ color: '#c1a185' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >土壌温度の推移</Typography>
+                    </Stack>
                     {soilTempWeekly.length === 0 ? (
                       <Typography variant="body2" color="text.secondary">
                         データがありません
@@ -168,9 +172,9 @@ export default function WeeklyRecordPageContainer() {
                           <YAxis unit="°C" />
                           <Tooltip />
                           <Legend />
-                          <Line dataKey="max" name="最高温度"  strokeWidth={2} />
-                          <Line dataKey="avg" name="平均温度"  strokeWidth={2} />
-                          <Line dataKey="min" name="最低温度"  strokeWidth={2} />
+                          <Line dataKey="max" name="最高温度" stroke="#c18585"  strokeWidth={2} />
+                          <Line dataKey="avg" name="平均温度" stroke="#92c185" strokeWidth={2} />
+                          <Line dataKey="min" name="最低温度" stroke="#85a5c1" strokeWidth={2} />
                         </LineChart>
                       </ResponsiveContainer>
                     )}
@@ -185,11 +189,11 @@ export default function WeeklyRecordPageContainer() {
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      土壌水分量の推移
-                    </Typography>
+                  <Stack spacing={0.5} >    
+                    <Stack direction="row"  alignItems="center">                 
+                      <WaterDropIcon sx={{ color: '#85a5c1' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >土壌水分量の推移</Typography>                    
+                    </Stack>
                       {soilMoistureWeekly.length === 0 ? (
                         <Typography variant="body2" color="text.secondary">
                           データがありません
@@ -201,9 +205,9 @@ export default function WeeklyRecordPageContainer() {
                             <YAxis />
                             <Tooltip />
                             <Legend />
-                            <Line dataKey="max" name="最大値" strokeWidth={2} />
-                            <Line dataKey="avg" name="平均値" strokeWidth={2} />
-                            <Line dataKey="min" name="最小値" strokeWidth={2} />
+                            <Line dataKey="max" name="最大値" stroke="#c18585" strokeWidth={2} />
+                            <Line dataKey="avg" name="平均値" stroke="#92c185" strokeWidth={2} />
+                            <Line dataKey="min" name="最小値" stroke="#85a5c1" strokeWidth={2} />
                           </LineChart>
                         </ResponsiveContainer>
                       )}                  
@@ -219,11 +223,11 @@ export default function WeeklyRecordPageContainer() {
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      室内温度の推移
-                    </Typography>
+                  <Stack spacing={0.5} >
+                    <Stack direction="row"  alignItems="center">                  
+                      <ThermostatIcon sx={{ color: '#c18585' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >室内温度の推移</Typography>
+                    </Stack>
                     {roomTempWeekly.length === 0 ? (
                         <Typography variant="body2" color="text.secondary">
                           データがありません
@@ -235,9 +239,9 @@ export default function WeeklyRecordPageContainer() {
                             <YAxis unit="°C" />
                             <Tooltip />
                             <Legend />
-                            <Line dataKey="max" name="最高温度"  strokeWidth={2} />
-                            <Line dataKey="avg" name="平均温度"  strokeWidth={2} />
-                            <Line dataKey="min" name="最低温度"  strokeWidth={2} />
+                            <Line dataKey="max" name="最高温度" stroke="#c18585" strokeWidth={2} />
+                            <Line dataKey="avg" name="平均温度" stroke="#92c185" strokeWidth={2} />
+                            <Line dataKey="min" name="最低温度" stroke="#85a5c1" strokeWidth={2} />
                           </LineChart>
                         </ResponsiveContainer>
                       )}
@@ -251,11 +255,11 @@ export default function WeeklyRecordPageContainer() {
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      室内湿度の推移
-                    </Typography>
+                  <Stack spacing={0.5} >  
+                    <Stack direction="row"  alignItems="center">     
+                      <ThermostatIcon sx={{ color: '#85a5c1' }} /> 
+                      <Typography variant="subtitle1" color="text.primary">室内湿度の推移</Typography>
+                    </Stack> 
                     {roomHumidWeekly.length === 0 ? (
                         <Typography variant="body2" color="text.secondary">
                           データがありません
@@ -267,9 +271,9 @@ export default function WeeklyRecordPageContainer() {
                             <YAxis unit="%" />
                             <Tooltip />
                             <Legend />
-                            <Line dataKey="max" name="最高湿度"  strokeWidth={2} />
-                            <Line dataKey="avg" name="平均湿度"  strokeWidth={2} />
-                            <Line dataKey="min" name="最低湿度"  strokeWidth={2} />
+                            <Line dataKey="max" name="最高湿度" stroke="#c18585" strokeWidth={2} />
+                            <Line dataKey="avg" name="平均湿度" stroke="#92c185" strokeWidth={2} />
+                            <Line dataKey="min" name="最低湿度" stroke="#85a5c1" strokeWidth={2} />
                           </LineChart>
                         </ResponsiveContainer>
                       )}
@@ -285,11 +289,11 @@ export default function WeeklyRecordPageContainer() {
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      日射量の推移
-                    </Typography>
+                  <Stack spacing={0.5} >   
+                    <Stack direction="row"  alignItems="center">                  
+                      <SunnyIcon sx={{ color: '#c18585' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >日射量の推移</Typography>                    
+                    </Stack>
                     {lightWeekly.length === 0 ? (
                         <Typography variant="body2" color="text.secondary">
                           データがありません
@@ -298,12 +302,12 @@ export default function WeeklyRecordPageContainer() {
                         <ResponsiveContainer width="100%" height={250}>
                           <LineChart data={lightWeekly}>
                             <XAxis dataKey="date" />
-                            <YAxis unit="lux" />
+                            <YAxis tick={{ fontSize: 14 }} unit="lux" />
                             <Tooltip />
                             <Legend />
-                            <Line dataKey="max" name="最大値" strokeWidth={2} />
-                            <Line dataKey="avg" name="平均値" strokeWidth={2} />
-                            <Line dataKey="min" name="最小値" strokeWidth={2} />
+                            <Line dataKey="max" name="最大値" stroke="#c18585" strokeWidth={2} />
+                            <Line dataKey="avg" name="平均値" stroke="#92c185" strokeWidth={2} />
+                            <Line dataKey="min" name="最小値" stroke="#85a5c1" strokeWidth={2} />
                           </LineChart>
                         </ResponsiveContainer>
                       )}
@@ -319,11 +323,11 @@ export default function WeeklyRecordPageContainer() {
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      CO₂濃度の推移
-                    </Typography>
+                  <Stack spacing={0.5} >   
+                    <Stack direction="row"  alignItems="center">  
+                      <SpeedIcon sx={{ color: '#85a5c1' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >CO₂濃度の推移</Typography>
+                    </Stack> 
                   </Stack>
                 </Stack>
               </CardContent>
@@ -335,10 +339,10 @@ export default function WeeklyRecordPageContainer() {
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      EC値の推移（週次）
-                    </Typography>
+                    <Stack direction="row"  alignItems="center"> 
+                      <BoltIcon sx={{ color: '#c0c185' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >EC値の推移（週次）</Typography>
+                    </Stack>
                   </Stack>
                 </Stack>
               </CardContent>

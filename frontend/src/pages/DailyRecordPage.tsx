@@ -26,6 +26,10 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import SunnyIcon from '@mui/icons-material/Sunny';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import BoltIcon from '@mui/icons-material/Bolt';
+import SpeedIcon from '@mui/icons-material/Speed';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -283,10 +287,9 @@ export default function DailyRecordPageContainer() {
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar variant='rounded' >
+                  <Avatar sx={{ bgcolor: '#c1a185' }} variant='rounded' >
                     <ThermostatIcon />
                   </Avatar>
-
                   <Stack spacing={0.5}>  
                     <Typography variant='subtitle1' color='text.primary'>
                       土壌温度
@@ -307,10 +310,9 @@ export default function DailyRecordPageContainer() {
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar variant='rounded' >
-                    <ThermostatIcon />
+                  <Avatar sx={{ bgcolor: '#85a5c1' }} variant='rounded' >
+                    <WaterDropIcon />
                   </Avatar>
-
                   <Stack spacing={0.5}>  
                     <Typography variant='subtitle1' color='text.primary'>
                       土壌水分量
@@ -330,10 +332,9 @@ export default function DailyRecordPageContainer() {
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar variant='rounded' >
+                  <Avatar sx={{ bgcolor: '#A395A3' }} variant='rounded' >
                     <ThermostatIcon />
                   </Avatar>
-
                   <Stack spacing={0.5}>  
                     <Typography variant='subtitle1' color='text.primary'>
                       室内温湿度
@@ -358,10 +359,9 @@ export default function DailyRecordPageContainer() {
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar variant='rounded' >
-                    <ThermostatIcon />
+                  <Avatar sx={{ bgcolor: '#c18585' }} variant='rounded' >
+                    <SunnyIcon />
                   </Avatar>
-
                   <Stack spacing={0.5}>  
                     <Typography variant='subtitle1' color='text.primary'>
                       日射量
@@ -384,10 +384,9 @@ export default function DailyRecordPageContainer() {
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar variant='rounded' >
-                    <ThermostatIcon />
+                  <Avatar sx={{ bgcolor: '#85a5c1' }} variant='rounded' >
+                    <SpeedIcon />
                   </Avatar>
-
                   <Stack spacing={0.5}>  
                     <Typography variant='subtitle1' color='text.primary'>
                       CO₂濃度
@@ -407,8 +406,8 @@ export default function DailyRecordPageContainer() {
             <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar variant='rounded' >
-                    <ThermostatIcon />
+                  <Avatar sx={{ bgcolor: '#c0c185' }} variant='rounded' >
+                    <BoltIcon />
                   </Avatar>
 
                   <Stack spacing={0.5}>  
@@ -434,10 +433,10 @@ export default function DailyRecordPageContainer() {
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      土壌温度の推移                      
-                    </Typography>
+                    <Stack direction="row"  alignItems="center">               
+                      <ThermostatIcon sx={{ color: '#c1a185' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >土壌温度の推移</Typography>
+                    </Stack>
                     {soilTempDaily.length === 0 ? (
                         <Typography variant="body2" color="text.secondary">
                           データがありません
@@ -449,7 +448,7 @@ export default function DailyRecordPageContainer() {
                               <XAxis dataKey="time" />
                               <YAxis unit="°C" />
                               <Tooltip />
-                              <Line dataKey="value" strokeWidth={2} dot={false} />
+                              <Line dataKey="value" name="土壌温度" strokeWidth={2} dot={false} stroke="#c1a185" />
                             </LineChart>
                           </ResponsiveContainer>
                         </Box>
@@ -464,10 +463,10 @@ export default function DailyRecordPageContainer() {
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}>
                   <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      土壌水分量の推移
-                    </Typography>
+                    <Stack direction="row"  alignItems="center">                 
+                      <WaterDropIcon sx={{ color: '#85a5c1' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >土壌水分量の推移</Typography>                    
+                    </Stack>
                     {soilMoistureDaily.length === 0 ? (
                       <Typography variant="body2" color="text.secondary">
                         データがありません
@@ -479,7 +478,7 @@ export default function DailyRecordPageContainer() {
                             <XAxis dataKey="time" />
                             <YAxis unit="" />
                             <Tooltip />
-                            <Line dataKey="value" dot={false} strokeWidth={2} />
+                            <Line dataKey="value" name="土壌水分量" dot={false} strokeWidth={2} stroke="#85a5c1" />
                           </LineChart>
                         </ResponsiveContainer>
                       </Box>
@@ -497,10 +496,10 @@ export default function DailyRecordPageContainer() {
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}>
                   <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      室内温湿度の推移
-                    </Typography>
+                    <Stack direction="row"  alignItems="center">                  
+                      <ThermostatIcon sx={{ color: '#A395A3' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >室内温湿度の推移</Typography>
+                    </Stack>
                     {/* 室内温湿度 */}
                     {roomTHDaily.length === 0 ? (
                       <Typography variant="body2" color="text.secondary">
@@ -524,6 +523,7 @@ export default function DailyRecordPageContainer() {
                               dot={false}
                               strokeWidth={2}
                               name="室内温度"
+                              stroke="#c18585"
                             />
                             <Line
                               yAxisId="right"
@@ -531,6 +531,7 @@ export default function DailyRecordPageContainer() {
                               dot={false}
                               strokeWidth={2}
                               name="室内湿度"
+                              stroke="#85a5c1"
                             />
                           </LineChart>
                         </ResponsiveContainer>
@@ -546,10 +547,10 @@ export default function DailyRecordPageContainer() {
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}>
                   <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      日射量の推移
-                    </Typography>
+                    <Stack direction="row"  alignItems="center">                  
+                      <SunnyIcon sx={{ color: '#c18585' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >日射量の推移</Typography>                    
+                    </Stack>
                     {lightDaily.length === 0 ? (
                       <Typography variant="body2" color="text.secondary">
                         データがありません
@@ -559,9 +560,9 @@ export default function DailyRecordPageContainer() {
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={lightDaily}>
                             <XAxis dataKey="time" />
-                            <YAxis unit="lux" />
+                            <YAxis tick={{ fontSize: 14 }} unit="lux" />
                             <Tooltip />
-                            <Line dataKey="value" dot={false} strokeWidth={2} />
+                            <Line dataKey="value" name="日射量" dot={false} strokeWidth={2} stroke="#c18585" />
                           </LineChart>
                         </ResponsiveContainer>
                       </Box>
@@ -577,10 +578,10 @@ export default function DailyRecordPageContainer() {
               <CardContent>
                 <Stack direction='row' spacing={2} alignItems='center'> 
                   <Stack spacing={0.5} >                     
-                    <Typography variant='subtitle1' color='text.primary' >
-                      <ThermostatIcon /> 
-                      CO₂濃度の推移
-                    </Typography>
+                    <Stack direction="row"  alignItems="center">  
+                      <SpeedIcon sx={{ color: '#85a5c1' }} /> 
+                      <Typography variant='subtitle1' color='text.primary' >CO₂濃度の推移</Typography>
+                    </Stack> 
                   </Stack>
                 </Stack>
               </CardContent>
