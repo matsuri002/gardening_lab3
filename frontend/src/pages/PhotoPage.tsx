@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   Stack,
-  IconButton,
 } from '@mui/material';
 import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
 import { useEffect, useState } from 'react';
@@ -21,11 +20,28 @@ type PhotoRecord = {
 
 export default function PhotoPageContainer() {
 
-  const [tabValue, setTabValue] = useState(2); // 写真タブ
   const [latestPhoto, setLatestPhoto] = useState<PhotoRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [photos, setPhotos] = useState<PhotoRecord[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const plantId = 'd5961b2c-fd83-4ccf-a3da-709e9aca6945';
+
+  const handlePrev = () => {
+      setCurrentIndex((prev) => {
+        const nextIndex = Math.min(prev + 1, photos.length - 1);
+        setLatestPhoto(photos[nextIndex]);
+        return nextIndex;
+      });
+    };
+
+    const handleNext = () => {
+      setCurrentIndex((prev) => {
+        const nextIndex = Math.max(prev - 1, 0);
+        setLatestPhoto(photos[nextIndex]);
+        return nextIndex;
+      });
+    };
 
   useEffect(() => {
     const fetchLatestPhoto = async () => {
@@ -36,8 +52,6 @@ export default function PhotoPageContainer() {
         .select('id, taken_at, storage_path')
         .eq('plant_id', plantId)
         .order('taken_at', { ascending: false })
-        .limit(1)
-        .single();
 
       if (error || !data) {
         console.error('最新写真取得失敗', error);
@@ -46,17 +60,22 @@ export default function PhotoPageContainer() {
         return;
       }
 
+      const photoList: PhotoRecord[] = data.map((photo) => {
       const { data: urlData } = supabase.storage
-        .from('photos')
-        .getPublicUrl(data.storage_path);
+          .from('photos')
+          .getPublicUrl(photo.storage_path);
 
-      setLatestPhoto({
-        ...data,
-        photo_url: urlData.publicUrl,
+        return {
+          ...photo,
+          photo_url: urlData.publicUrl,
+        };
       });
 
+      setPhotos(photoList);
+      setCurrentIndex(0);           // 最新1枚
+      setLatestPhoto(photoList[0]); // 既存ロジック維持
       setLoading(false);
-    };
+    };   
 
     fetchLatestPhoto();
   }, []);
@@ -106,8 +125,8 @@ export default function PhotoPageContainer() {
           <Box sx={{p: 2, display: 'flex', gap: 2, }}>
             {/* TODO: 再生・停止ボタンを設置 */}
             {/* TODO: 時間バーを設置 */}
-            <Card sx={{ width: '800px', height: '400px' }}>
-              <CardContent sx={{ height: '100%' }}>
+            <Card sx={{ width: '800px'}}>
+              <CardContent>
                 {loading ? (
                   <Typography>読み込み中...</Typography>
                 ) : !latestPhoto ? (
@@ -117,7 +136,7 @@ export default function PhotoPageContainer() {
                 ) : (
                   <Stack spacing={2}>
                     <Typography variant="subtitle1">
-                      {dayjs(latestPhoto.taken_at).format(
+                      {dayjs(latestPhoto.taken_at.replace('+00', '')).format(
                         'YYYY年MM月DD日 HH:mm'
                       )}
                     </Typography>
@@ -128,14 +147,32 @@ export default function PhotoPageContainer() {
                       alt="plant photo"
                       sx={{
                         width: '100%',
-                        maxHeight: 500,
+                        maxHeight: 450,
                         objectFit: 'contain',
                         borderRadius: 2,
+                        margin: '0 auto',
                       }}
                     />
                   </Stack>
                 )}
               </CardContent>
+              <Stack direction="row" spacing={2} justifyContent="center" sx={{pb: '3px'}}>
+                <Button
+                  onClick={handlePrev}
+                  disabled={currentIndex >= photos.length - 1}
+                >
+                  ◀
+                </Button>
+                <Typography>
+                  {photos.length - currentIndex} / {photos.length}
+                </Typography>
+                <Button
+                  onClick={handleNext}
+                  disabled={currentIndex <= 0}
+                >
+                  ▶
+                </Button>
+              </Stack>
             </Card>
           </Box>
         </Container>
