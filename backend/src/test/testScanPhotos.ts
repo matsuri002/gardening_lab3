@@ -71,7 +71,8 @@ const scanPhotos = async () => {
     ).format('YYYY-MM-DD HH:mm:ss');
 
     // OneDrive 上の相対パス
-    const photoPath = `${plantKey}/camera/${file}`;
+    const fullPath = path.join(CAMERA_DIR, file); 
+    const storagePath = `${plantKey}/${file}`; 
 
     try {
       // すでに同じ photo_path があるかチェック
@@ -79,7 +80,7 @@ const scanPhotos = async () => {
         await supabase
           .from('photos')
           .select('id')
-          .eq('photo_path', photoPath)
+          .eq('storage_path', storagePath)
           .limit(1);
 
       if (existsError) {
@@ -93,19 +94,30 @@ const scanPhotos = async () => {
         continue;
       }
 
-      // insert
+      const { error: uploadError } = await supabase.storage
+        .from('photos')
+        .upload(
+          storagePath,
+          fs.createReadStream(fullPath),
+          { upsert: true }
+        );
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
       const { error: insertError } = await supabase
         .from('photos')
         .insert({
           plant_id: plantId,
           taken_at: takenAt,
-          photo_path: photoPath,
+          storage_path: storagePath,
         });
 
       if (insertError) {
         console.error('insert error:', file, insertError);
       } else {
-        console.log('inserted:', file);
+        console.log('inserted:', storagePath);
       }
     } catch (e) {
       console.error('unexpected error on file:', file, e);
