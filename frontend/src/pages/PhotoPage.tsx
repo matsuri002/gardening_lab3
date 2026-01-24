@@ -24,12 +24,13 @@ export default function PhotoPageContainer() {
   const [loading, setLoading] = useState(true);
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const plantId = 'd5961b2c-fd83-4ccf-a3da-709e9aca6945';
 
   const handlePrev = () => {
       setCurrentIndex((prev) => {
-        const nextIndex = Math.min(prev + 1, photos.length - 1);
+        const nextIndex = Math.max(prev - 1, 0);
         setLatestPhoto(photos[nextIndex]);
         return nextIndex;
       });
@@ -37,10 +38,18 @@ export default function PhotoPageContainer() {
 
     const handleNext = () => {
       setCurrentIndex((prev) => {
-        const nextIndex = Math.max(prev - 1, 0);
+        const nextIndex = Math.min(prev + 1, photos.length - 1);
         setLatestPhoto(photos[nextIndex]);
         return nextIndex;
       });
+    };
+
+    const handlePlay = () => {
+      if (photos.length === 0) return;
+
+      setCurrentIndex(0);
+      setLatestPhoto(photos[0]);
+      setIsPlaying(true);
     };
 
   useEffect(() => {
@@ -51,7 +60,7 @@ export default function PhotoPageContainer() {
         .from('photos')
         .select('id, taken_at, storage_path')
         .eq('plant_id', plantId)
-        .order('taken_at', { ascending: false })
+        .order('taken_at', { ascending: true })
 
       if (error || !data) {
         console.error('最新写真取得失敗', error);
@@ -72,13 +81,35 @@ export default function PhotoPageContainer() {
       });
 
       setPhotos(photoList);
-      setCurrentIndex(0);           // 最新1枚
-      setLatestPhoto(photoList[0]); // 既存ロジック維持
+      setCurrentIndex(photoList.length - 1);           // 最新1枚
+      setLatestPhoto(photoList[photoList.length - 1]); // 既存ロジック維持
       setLoading(false);
     };   
 
     fetchLatestPhoto();
   }, []);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    if (photos.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => {
+        const next = prev + 1;
+
+        if (next >= photos.length) {
+          // 最後まで行ったら停止
+          setIsPlaying(false);
+          return prev;
+        }
+
+        setLatestPhoto(photos[next]);
+        return next;
+      });
+    }, 300); // ← 再生速度
+
+    return () => clearInterval(interval);
+  }, [isPlaying, photos]);
 
   return (
     <Box 
@@ -159,20 +190,37 @@ export default function PhotoPageContainer() {
               <Stack direction="row" spacing={2} justifyContent="center" sx={{pb: '3px'}}>
                 <Button
                   onClick={handlePrev}
-                  disabled={currentIndex >= photos.length - 1}
+                  disabled={currentIndex <= 0}
                 >
                   ◀
                 </Button>
                 <Typography>
-                  {photos.length - currentIndex} / {photos.length}
+                  {currentIndex + 1} / {photos.length}
                 </Typography>
                 <Button
                   onClick={handleNext}
-                  disabled={currentIndex <= 0}
+                  disabled={currentIndex >= photos.length - 1}
                 >
                   ▶
                 </Button>
               </Stack>
+              <Stack direction="row" spacing={2}  justifyContent="center" sx={{pb: '3px'}} >
+                <Button
+                  variant="contained"
+                  onClick={handlePlay}
+                  disabled={isPlaying || loading}
+                >
+                  ▶ 再生
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsPlaying(false)}
+                  disabled={!isPlaying}
+                >
+                  ⏸ 停止
+                </Button>
+            </Stack>
             </Card>
           </Box>
         </Container>
