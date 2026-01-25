@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import BackButton from '../components/BackButton';
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useNavigate } from 'react-router-dom';
 
 type Plant = {
   id: string;
@@ -14,6 +15,7 @@ type Plant = {
 export default function SelectPlanterPageContainer() {
 
   const [plants, setPlants] = useState<Plant[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPlants = async () => {
@@ -62,7 +64,7 @@ export default function SelectPlanterPageContainer() {
             <Typography variant='h5'>データの確認をしたい鉢を選択してください</Typography>
           </Box>
           
-          {/* 鉢の表示 */} {/* TODO:表示する鉢はdataから持ってくる*/}
+          {/* 鉢の表示 */}
           <Box
             sx={{
               display: 'flex',
@@ -76,9 +78,11 @@ export default function SelectPlanterPageContainer() {
               <Button
                 key={plant.id}
                 variant="contained"
-                color="success"
                 size="large"
-                sx={{ p: { xs: 2.5, sm: 3 } }}
+                sx={{ p: { xs: 2.5, sm: 3 }, bgcolor: "#85a5c1" }}
+                onClick={() => {
+                  navigate(`/plants/${plant.plant_name}/daily`);
+                }}
               >
                 {plant.plant_name}
               </Button>
