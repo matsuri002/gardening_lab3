@@ -16,7 +16,7 @@ const RecordTabs = () => {
       <Tabs
         value={currentTab()}
         onChange={(_, newValue) => {
-          if (newValue === 0) navigate("/");
+          if (newValue === 0) navigate("/daily");
           if (newValue === 1) navigate("/weekly");
           if (newValue === 2) navigate("/photo");
         }}

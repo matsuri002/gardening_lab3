@@ -1,5 +1,5 @@
 import {
-  Typography, Box, Container, Button,
+  Typography, Box, Container,
   Card,
   CardContent,
   Stack,
@@ -18,6 +18,7 @@ import { supabase } from '../lib/supabase';
 import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } from 'recharts';
 import RecordTabs from '../components/Tab';
 import Header from '../components/Header';
+import BackButton from '../components/BackButton';
 
 export default function WeeklyRecordPageContainer() {
 
@@ -105,14 +106,11 @@ export default function WeeklyRecordPageContainer() {
       {/* ヘッダー */}
       <Header />
 
-      {/* TODO: 戻るボタンとタブは上部固定にする */}
-      {/* 戻るボタン押下後SelectPlanterPageに画面遷移 */}
-      <Button size='large' sx={{ p: { xs: 2.5, sm: 3 } }}> 戻る </Button>
-
       {/* タブ - 1週間の記録を選択 */}
-      <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: 'background.paper' }}>
+      <Stack direction="row" spacing={15} alignItems="center">
         <RecordTabs />
-      </Box>
+        <BackButton to="/select-planter" />
+      </Stack>
 
       {/* メイン */}
       <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', }}>

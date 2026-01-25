@@ -1,5 +1,6 @@
 import { Typography, Box, Container, Button } from '@mui/material';
 import Header from '../components/Header';
+import BackButton from '../components/BackButton';
 
 export default function SelectPlanterPageContainer() {
   return (
@@ -24,7 +25,7 @@ export default function SelectPlanterPageContainer() {
         >
         
         {/* 戻るボタン押下後TopPageに画面遷移 */}
-        <Button size='large' sx={{ p: { xs: 2.5, sm: 3 } }}> 戻る </Button>
+        <BackButton to="/" />
 
           <Box component='footer' sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
             <Typography variant='h5'>コマツナを選択</Typography> {/* TODO:コマツナの部分はdataから持ってくる*/}
