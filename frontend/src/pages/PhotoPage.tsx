@@ -179,6 +179,7 @@ export default function PhotoPageContainer() {
                 <Button
                   onClick={handlePrev}
                   disabled={currentIndex <= 0}
+                  sx={{ color:"#85a5c1"}}
                 >
                   ◀
                 </Button>
@@ -188,6 +189,7 @@ export default function PhotoPageContainer() {
                 <Button
                   onClick={handleNext}
                   disabled={currentIndex >= photos.length - 1}
+                  sx={{ color:"#85a5c1"}}
                 >
                   ▶
                 </Button>
@@ -197,6 +199,7 @@ export default function PhotoPageContainer() {
                   variant="contained"
                   onClick={handlePlay}
                   disabled={isPlaying || loading}
+                  sx={{ bgcolor:"#85a5c1"}}
                 >
                   ▶ 再生
                 </Button>
@@ -205,6 +208,7 @@ export default function PhotoPageContainer() {
                   variant="outlined"
                   onClick={() => setIsPlaying(false)}
                   disabled={!isPlaying}
+                  sx={{ color:"#85a5c1"}}
                 >
                   ⏸ 停止
                 </Button>
