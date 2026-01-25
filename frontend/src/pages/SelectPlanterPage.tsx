@@ -1,8 +1,38 @@
 import { Typography, Box, Container, Button } from '@mui/material';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+
+type Plant = {
+  id: string;
+  year: number;
+  plant_type: string;
+  plant_name: string;
+};
 
 export default function SelectPlanterPageContainer() {
+
+  const [plants, setPlants] = useState<Plant[]>([]);
+
+  useEffect(() => {
+    const fetchPlants = async () => {
+      const { data, error } = await supabase
+        .from('plants')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('plants取得エラー', error);
+        return;
+      }
+
+      setPlants(data ?? []);
+    };
+
+    fetchPlants();
+  }, []);
+
   return (
     <Box 
       sx={{
@@ -33,31 +63,26 @@ export default function SelectPlanterPageContainer() {
           </Box>
           
           {/* 鉢の表示 */} {/* TODO:表示する鉢はdataから持ってくる*/}
-          <Box sx={{display: 'flex', gap: 2, width: '100%', justifyContent: 'center' }}>
-            <Button
-              variant='contained'
-              color='success'
-              size='large'
-              sx={{ p: { xs: 2.5, sm: 3 } }}
-            >
-              コマツナA
-            </Button>
-            <Button
-              variant='contained'
-              color='success'
-              size='large'
-              sx={{ p: { xs: 2.5, sm: 3 } }}
-            >
-              コマツナB
-            </Button>
-            <Button
-              variant='contained'
-              color='success'
-              size='large'
-              sx={{ p: { xs: 2.5, sm: 3 } }}
-            >
-              コマツナC
-            </Button>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              width: '100%',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            {plants.map((plant) => (
+              <Button
+                key={plant.id}
+                variant="contained"
+                color="success"
+                size="large"
+                sx={{ p: { xs: 2.5, sm: 3 } }}
+              >
+                {plant.plant_name}
+              </Button>
+            ))}
           </Box>
         </Container>
       </Box>
