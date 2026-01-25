@@ -4,7 +4,10 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 const RecordTabs = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { plantName } = useParams<{ plantName: string }>();
+  const { plantType, plantName } = useParams<{
+    plantType: string;
+    plantName: string;
+  }>();
 
   const currentTab = () => {
     if (location.pathname.endsWith("/weekly")) return 1;
@@ -31,9 +34,12 @@ const RecordTabs = () => {
         }}
         value={currentTab()}
         onChange={(_, newValue) => {
-          if (newValue === 0) navigate(`/plants/${plantName}/daily`);
-          if (newValue === 1) navigate(`/plants/${plantName}/weekly`);
-          if (newValue === 2) navigate(`/plants/${plantName}/photo`);
+          if (newValue === 0)
+            navigate(`/plants/${plantType}/${plantName}/daily`);
+          if (newValue === 1)
+            navigate(`/plants/${plantType}/${plantName}/weekly`);
+          if (newValue === 2)
+            navigate(`/plants/${plantType}/${plantName}/photo`);
         }}
       >
         <Tab label="本日の記録" />

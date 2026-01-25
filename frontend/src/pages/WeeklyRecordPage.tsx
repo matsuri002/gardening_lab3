@@ -19,6 +19,7 @@ import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } f
 import RecordTabs from '../components/Tab';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
+import { useParams } from 'react-router-dom';
 
 export default function WeeklyRecordPageContainer() {
 
@@ -28,6 +29,10 @@ export default function WeeklyRecordPageContainer() {
     min: number;
     avg: number;
   };
+  
+  const { plantType } = useParams<{
+    plantType: string;
+  }>();
 
   const [endDate, setEndDate] = useState<dayjs.Dayjs>(dayjs());
   const [soilTempWeekly, setSoilTempWeekly] = useState<WeeklyStatPoint[]>([]);
@@ -109,7 +114,9 @@ export default function WeeklyRecordPageContainer() {
       {/* タブ - 1週間の記録を選択 */}
       <Stack direction="row" spacing={15} alignItems="center">
         <RecordTabs />
-        <BackButton to="/select-planter" />
+        {plantType && (
+          <BackButton to={`/select-planter/${plantType}`} />
+        )}
       </Stack>
 
       {/* メイン */}

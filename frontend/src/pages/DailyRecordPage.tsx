@@ -30,6 +30,7 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import RecordTabs from "../components/Tab";
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
+import { useParams } from 'react-router-dom';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -65,6 +66,10 @@ export default function DailyRecordPageContainer() {
     room_humid: number | null;
     light: number | null;
   };
+
+  const { plantType } = useParams<{
+    plantType: string;
+  }>();
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
@@ -235,7 +240,9 @@ export default function DailyRecordPageContainer() {
       {/* タブ */}
       <Stack direction="row" spacing={15} alignItems="center">
         <RecordTabs />
-        <BackButton to="/select-planter" />
+        {plantType && (
+          <BackButton to={`/select-planter/${plantType}`} />
+        )}
       </Stack>
 
       {/* メイン */}

@@ -3,7 +3,7 @@ import Header from '../components/Header';
 import BackButton from '../components/BackButton';
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 type Plant = {
   id: string;
@@ -16,13 +16,15 @@ export default function SelectPlanterPageContainer() {
 
   const [plants, setPlants] = useState<Plant[]>([]);
   const navigate = useNavigate();
+  const { plantType } = useParams<{ plantType: string }>();
 
   useEffect(() => {
     const fetchPlants = async () => {
       const { data, error } = await supabase
         .from('plants')
         .select('*')
-        .order('created_at', { ascending: true });
+        .eq('plant_type', plantType)
+        .order('created_at', { ascending: true });      
 
       if (error) {
         console.error('plants取得エラー', error);
@@ -81,7 +83,7 @@ export default function SelectPlanterPageContainer() {
                 size="large"
                 sx={{ p: { xs: 2.5, sm: 3 }, bgcolor: "#85a5c1" }}
                 onClick={() => {
-                  navigate(`/plants/${plant.plant_name}/daily`);
+                  navigate(`/plants/${plantType}/${plant.plant_name}/daily`);
                 }}
               >
                 {plant.plant_name}

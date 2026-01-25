@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import RecordTabs from '../components/Tab';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
+import { useParams } from 'react-router-dom';
 
 type PhotoRecord = {
   id: string;
@@ -19,6 +20,10 @@ type PhotoRecord = {
 };
 
 export default function PhotoPageContainer() {
+
+  const { plantType } = useParams<{
+    plantType: string;
+  }>();
 
   const [latestPhoto, setLatestPhoto] = useState<PhotoRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -127,7 +132,9 @@ export default function PhotoPageContainer() {
       {/* タブ - 写真を選択 */}
       <Stack direction="row" spacing={15} alignItems="center">
         <RecordTabs />
-        <BackButton to="/select-planter" />
+        {plantType && (
+          <BackButton to={`/select-planter/${plantType}`} />
+        )}
       </Stack>
 
       {/* メイン */}
