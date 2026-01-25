@@ -1,7 +1,5 @@
-import {
-  AppBar, Toolbar, Typography, Box, Container, Button,
-} from '@mui/material';
-import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
+import { Typography, Box, Container, Button } from '@mui/material';
+import Header from '../components/Header';
 
 export default function TopPageContainer() {
   return (
@@ -15,12 +13,7 @@ export default function TopPageContainer() {
       }}
     >
       {/* ヘッダー */}
-      <AppBar position='static' color='success' enableColorOnDark>
-        <Toolbar sx={{ py: 1.25 }}>
-          <GrassTwoToneIcon sx={{ mr: 1, fontSize: 28 }} />
-          <Typography variant='h5'>Gardening Lab</Typography>
-        </Toolbar>
-      </AppBar>
+      <Header />
 
       {/* メイン */}
       <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>

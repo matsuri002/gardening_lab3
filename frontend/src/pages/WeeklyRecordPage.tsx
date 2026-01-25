@@ -1,10 +1,9 @@
 import {
-  AppBar, Toolbar, Typography, Box, Container, Button,
+  Typography, Box, Container, Button,
   Card,
   CardContent,
   Stack,
   } from '@mui/material';
-import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -18,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } from 'recharts';
 import RecordTabs from '../components/Tab';
+import Header from '../components/Header';
 
 export default function WeeklyRecordPageContainer() {
 
@@ -103,12 +103,7 @@ export default function WeeklyRecordPageContainer() {
       }}
     >
       {/* ヘッダー */}
-      <AppBar position='static' color='success' enableColorOnDark>
-        <Toolbar sx={{ py: 1.25 }}>
-          <GrassTwoToneIcon sx={{ mr: 1, fontSize: 28 }} />
-          <Typography variant='h5'>Gardening Lab</Typography>
-        </Toolbar>
-      </AppBar>
+      <Header />
 
       {/* TODO: 戻るボタンとタブは上部固定にする */}
       {/* 戻るボタン押下後SelectPlanterPageに画面遷移 */}

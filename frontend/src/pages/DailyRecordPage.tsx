@@ -1,11 +1,10 @@
 import {
-  AppBar, Toolbar, Typography, Box, Container, Button,
+  Typography, Box, Container, Button,
   Card,
   CardContent,
   Stack,
   Avatar,
 } from '@mui/material';
-import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -29,6 +28,7 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import BoltIcon from '@mui/icons-material/Bolt';
 import SpeedIcon from '@mui/icons-material/Speed';
 import RecordTabs from "../components/Tab";
+import Header from '../components/Header';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -226,12 +226,7 @@ export default function DailyRecordPageContainer() {
       }}
     >
       {/* ヘッダー */}
-      <AppBar position='static' color='success' enableColorOnDark>
-        <Toolbar sx={{ py: 1.25 }}>
-          <GrassTwoToneIcon sx={{ mr: 1, fontSize: 28 }} />
-          <Typography variant='h5'>Gardening Lab</Typography>
-        </Toolbar>
-      </AppBar>
+      <Header />
 
       {/* TODO: 戻るボタンとタブは上部固定にする */}
       {/* 戻るボタン押下後SelectPlanterPageに画面遷移 */}
