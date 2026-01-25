@@ -1,7 +1,5 @@
 import {
   AppBar, Toolbar, Typography, Box, Container, Button,
-  Tabs,
-  Tab,
   Card,
   CardContent,
   Stack,
@@ -30,6 +28,7 @@ import SunnyIcon from '@mui/icons-material/Sunny';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import BoltIcon from '@mui/icons-material/Bolt';
 import SpeedIcon from '@mui/icons-material/Speed';
+import RecordTabs from "../components/Tab";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -240,11 +239,7 @@ export default function DailyRecordPageContainer() {
 
       {/* タブ */}
       <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: 'background.paper' }}>
-        <Tabs>
-            <Tab label='本日の記録'></Tab>
-            <Tab label='1週間の記録'></Tab>
-            <Tab label='写真'></Tab>
-        </Tabs>
+        <RecordTabs />
       </Box>
 
       {/* メイン */}

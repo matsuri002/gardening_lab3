@@ -1,7 +1,5 @@
 import {
   AppBar, Toolbar, Typography, Box, Container, Button,
-  Tabs,
-  Tab,
   Card,
   CardContent,
   Stack,
@@ -10,6 +8,7 @@ import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import dayjs from 'dayjs';
+import RecordTabs from '../components/Tab';
 
 type PhotoRecord = {
   id: string;
@@ -135,11 +134,7 @@ export default function PhotoPageContainer() {
 
       {/* タブ - 写真を選択 */}
       <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: 'background.paper' }}>
-        <Tabs>
-            <Tab label='本日の記録'></Tab>
-            <Tab label='1週間の記録'></Tab>
-            <Tab label='写真'></Tab>
-        </Tabs>
+        <RecordTabs />
       </Box>
 
       {/* メイン */}
