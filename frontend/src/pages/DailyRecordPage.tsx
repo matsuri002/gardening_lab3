@@ -1,13 +1,10 @@
 import {
-  AppBar, Toolbar, Typography, Box, Container, Button,
-  Tabs,
-  Tab,
+  Typography, Box, Container,
   Card,
   CardContent,
   Stack,
   Avatar,
 } from '@mui/material';
-import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -30,6 +27,10 @@ import SunnyIcon from '@mui/icons-material/Sunny';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import BoltIcon from '@mui/icons-material/Bolt';
 import SpeedIcon from '@mui/icons-material/Speed';
+import RecordTabs from "../components/Tab";
+import Header from '../components/Header';
+import BackButton from '../components/BackButton';
+import { useParams } from 'react-router-dom';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -65,6 +66,10 @@ export default function DailyRecordPageContainer() {
     room_humid: number | null;
     light: number | null;
   };
+
+  const { plantType } = useParams<{
+    plantType: string;
+  }>();
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
@@ -227,25 +232,18 @@ export default function DailyRecordPageContainer() {
       }}
     >
       {/* ヘッダー */}
-      <AppBar position='static' color='success' enableColorOnDark>
-        <Toolbar sx={{ py: 1.25 }}>
-          <GrassTwoToneIcon sx={{ mr: 1, fontSize: 28 }} />
-          <Typography variant='h5'>Gardening Lab</Typography>
-        </Toolbar>
-      </AppBar>
+      <Header />
 
       {/* TODO: 戻るボタンとタブは上部固定にする */}
-      {/* 戻るボタン押下後SelectPlanterPageに画面遷移 */}
-      <Button size='large' sx={{ p: { xs: 2.5, sm: 3 } }}> 戻る </Button>
+      
 
       {/* タブ */}
-      <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: 'background.paper' }}>
-        <Tabs>
-            <Tab label='本日の記録'></Tab>
-            <Tab label='1週間の記録'></Tab>
-            <Tab label='写真'></Tab>
-        </Tabs>
-      </Box>
+      <Stack direction="row" spacing={15} alignItems="center">
+        <RecordTabs />
+        {plantType && (
+          <BackButton to={`/select-planter/${plantType}`} />
+        )}
+      </Stack>
 
       {/* メイン */}
       <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', }}>

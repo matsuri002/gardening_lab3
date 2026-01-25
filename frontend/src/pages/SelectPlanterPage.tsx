@@ -1,9 +1,42 @@
-import {
-  AppBar, Toolbar, Typography, Box, Container, Button,
-} from '@mui/material';
-import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
+import { Typography, Box, Container, Button } from '@mui/material';
+import Header from '../components/Header';
+import BackButton from '../components/BackButton';
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { useNavigate, useParams } from 'react-router-dom';
+
+type Plant = {
+  id: string;
+  year: number;
+  plant_type: string;
+  plant_name: string;
+};
 
 export default function SelectPlanterPageContainer() {
+
+  const [plants, setPlants] = useState<Plant[]>([]);
+  const navigate = useNavigate();
+  const { plantType } = useParams<{ plantType: string }>();
+
+  useEffect(() => {
+    const fetchPlants = async () => {
+      const { data, error } = await supabase
+        .from('plants')
+        .select('*')
+        .eq('plant_type', plantType)
+        .order('created_at', { ascending: true });      
+
+      if (error) {
+        console.error('plants取得エラー', error);
+        return;
+      }
+
+      setPlants(data ?? []);
+    };
+
+    fetchPlants();
+  }, []);
+
   return (
     <Box 
       sx={{
@@ -15,12 +48,7 @@ export default function SelectPlanterPageContainer() {
       }}
     >
       {/* ヘッダー */}
-      <AppBar position='static' color='success' enableColorOnDark>
-        <Toolbar sx={{ py: 1.25 }}>
-          <GrassTwoToneIcon sx={{ mr: 1, fontSize: 28 }} />
-          <Typography variant='h5'>Gardening Lab</Typography>
-        </Toolbar>
-      </AppBar>
+      <Header />
 
       {/* 鉢選択画面 */}
       <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -31,39 +59,36 @@ export default function SelectPlanterPageContainer() {
         >
         
         {/* 戻るボタン押下後TopPageに画面遷移 */}
-        <Button size='large' sx={{ p: { xs: 2.5, sm: 3 } }}> 戻る </Button>
+        <BackButton to="/" />
 
           <Box component='footer' sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
             <Typography variant='h5'>コマツナを選択</Typography> {/* TODO:コマツナの部分はdataから持ってくる*/}
             <Typography variant='h5'>データの確認をしたい鉢を選択してください</Typography>
           </Box>
           
-          {/* 鉢の表示 */} {/* TODO:表示する鉢はdataから持ってくる*/}
-          <Box sx={{display: 'flex', gap: 2, width: '100%', justifyContent: 'center' }}>
-            <Button
-              variant='contained'
-              color='success'
-              size='large'
-              sx={{ p: { xs: 2.5, sm: 3 } }}
-            >
-              コマツナA
-            </Button>
-            <Button
-              variant='contained'
-              color='success'
-              size='large'
-              sx={{ p: { xs: 2.5, sm: 3 } }}
-            >
-              コマツナB
-            </Button>
-            <Button
-              variant='contained'
-              color='success'
-              size='large'
-              sx={{ p: { xs: 2.5, sm: 3 } }}
-            >
-              コマツナC
-            </Button>
+          {/* 鉢の表示 */}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              width: '100%',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            {plants.map((plant) => (
+              <Button
+                key={plant.id}
+                variant="contained"
+                size="large"
+                sx={{ p: { xs: 2.5, sm: 3 }, bgcolor: "#85a5c1" }}
+                onClick={() => {
+                  navigate(`/plants/${plantType}/${plant.plant_name}/daily`);
+                }}
+              >
+                {plant.plant_name}
+              </Button>
+            ))}
           </Box>
         </Container>
       </Box>

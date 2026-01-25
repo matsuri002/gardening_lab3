@@ -1,15 +1,16 @@
 import {
-  AppBar, Toolbar, Typography, Box, Container, Button,
-  Tabs,
-  Tab,
+  Typography, Box, Container, Button,
   Card,
   CardContent,
   Stack,
 } from '@mui/material';
-import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import dayjs from 'dayjs';
+import RecordTabs from '../components/Tab';
+import Header from '../components/Header';
+import BackButton from '../components/BackButton';
+import { useParams } from 'react-router-dom';
 
 type PhotoRecord = {
   id: string;
@@ -19,6 +20,10 @@ type PhotoRecord = {
 };
 
 export default function PhotoPageContainer() {
+
+  const { plantType } = useParams<{
+    plantType: string;
+  }>();
 
   const [latestPhoto, setLatestPhoto] = useState<PhotoRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,25 +127,15 @@ export default function PhotoPageContainer() {
       }}
     >
       {/* ヘッダー */}
-      <AppBar position='static' color='success' enableColorOnDark>
-        <Toolbar sx={{ py: 1.25 }}>
-          <GrassTwoToneIcon sx={{ mr: 1, fontSize: 28 }} />
-          <Typography variant='h5'>Gardening Lab</Typography>
-        </Toolbar>
-      </AppBar>
-
-      {/* TODO: 戻るボタンとタブは上部固定にする */}
-      {/* 戻るボタン押下後SelectPlanterPageに画面遷移 */}
-      <Button size='large' sx={{ p: { xs: 2.5, sm: 3 } }}> 戻る </Button>
+      <Header />
 
       {/* タブ - 写真を選択 */}
-      <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: 'background.paper' }}>
-        <Tabs>
-            <Tab label='本日の記録'></Tab>
-            <Tab label='1週間の記録'></Tab>
-            <Tab label='写真'></Tab>
-        </Tabs>
-      </Box>
+      <Stack direction="row" spacing={15} alignItems="center">
+        <RecordTabs />
+        {plantType && (
+          <BackButton to={`/select-planter/${plantType}`} />
+        )}
+      </Stack>
 
       {/* メイン */}
       <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', }}>
@@ -191,6 +186,7 @@ export default function PhotoPageContainer() {
                 <Button
                   onClick={handlePrev}
                   disabled={currentIndex <= 0}
+                  sx={{ color:"#85a5c1"}}
                 >
                   ◀
                 </Button>
@@ -200,6 +196,7 @@ export default function PhotoPageContainer() {
                 <Button
                   onClick={handleNext}
                   disabled={currentIndex >= photos.length - 1}
+                  sx={{ color:"#85a5c1"}}
                 >
                   ▶
                 </Button>
@@ -209,6 +206,7 @@ export default function PhotoPageContainer() {
                   variant="contained"
                   onClick={handlePlay}
                   disabled={isPlaying || loading}
+                  sx={{ bgcolor:"#85a5c1"}}
                 >
                   ▶ 再生
                 </Button>
@@ -217,6 +215,7 @@ export default function PhotoPageContainer() {
                   variant="outlined"
                   onClick={() => setIsPlaying(false)}
                   disabled={!isPlaying}
+                  sx={{ color:"#85a5c1"}}
                 >
                   ⏸ 停止
                 </Button>

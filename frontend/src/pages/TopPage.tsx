@@ -1,9 +1,35 @@
-import {
-  AppBar, Toolbar, Typography, Box, Container, Button,
-} from '@mui/material';
-import GrassTwoToneIcon from '@mui/icons-material/GrassTwoTone';
+import { Typography, Box, Container, Button } from '@mui/material';
+import Header from '../components/Header';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function TopPageContainer() {
+
+  const [plantTypes, setPlantTypes] = useState<string[]>([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchPlantTypes = async () => {
+      const { data, error } = await supabase
+        .from('plants')
+        .select('plant_type');
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const uniqueTypes = Array.from(
+        new Set(data.map((item) => item.plant_type))
+      );
+
+      setPlantTypes(uniqueTypes);
+    };
+
+    fetchPlantTypes();
+  }, []);
+
   return (
     <Box 
       sx={{
@@ -15,12 +41,7 @@ export default function TopPageContainer() {
       }}
     >
       {/* ヘッダー */}
-      <AppBar position='static' color='success' enableColorOnDark>
-        <Toolbar sx={{ py: 1.25 }}>
-          <GrassTwoToneIcon sx={{ mr: 1, fontSize: 28 }} />
-          <Typography variant='h5'>Gardening Lab</Typography>
-        </Toolbar>
-      </AppBar>
+      <Header />
 
       {/* メイン */}
       <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
@@ -34,23 +55,18 @@ export default function TopPageContainer() {
             <Typography variant='h5'>野菜の種類を選択してください</Typography>
           </Box>
           {/* メニュー */}
-          <Box sx={{display: 'flex', gap: 2, width: '100%', justifyContent: 'center' }}>
-            <Button
-              variant='contained'
-              color='success'
-              size='large'
-              sx={{ p: { xs: 2.5, sm: 3 } }}
-            >
-              コマツナ
-            </Button>
-            <Button
-              variant='contained'
-              color='secondary'
-              size='large'
-              sx={{ p: { xs: 2.5, sm: 3 } }}
-            >
-              トマト
-            </Button>
+          <Box sx={{ display: 'flex', gap: 2, width: '100%', justifyContent: 'center' }}>
+            {plantTypes.map((type) => (
+              <Button
+                key={type}
+                variant="contained"
+                size="large"
+                sx={{ p: { xs: 2.5, sm: 3 }, bgcolor: "#c18585" }}
+                onClick={() => navigate(`/select-planter/${type}`)}
+              >
+                {type}
+              </Button>
+            ))}
           </Box>
         </Container>
       </Box>
