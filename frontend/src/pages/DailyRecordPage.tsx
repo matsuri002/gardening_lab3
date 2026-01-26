@@ -71,7 +71,14 @@ export default function DailyRecordPageContainer() {
     plantType: string;
   }>();
 
- type EcData = {
+ type EcRow = {
+    ec: number;
+    tds: number;
+    temperature: number;
+    measured_at: string;
+  };
+
+  type EcData = {
     ec: number;
     tds: number;
     temperature: number;
@@ -205,36 +212,34 @@ export default function DailyRecordPageContainer() {
     }
   };
 
-  const fetchEcDataBySelectedDate = async (selectedDate: Dayjs) => {
-    const endOfDay = selectedDate.endOf("day").format("YYYY-MM-DD HH:mm:ss");
+  const fetchEcDataBySelectedDate = async (selectedDate: string) => {
+    const start = `${selectedDate} 00:00:00`;
+    const end = `${selectedDate} 23:59:59`;
 
     const { data, error } = await supabase
       .from("ec_measurements")
-      .select(`
-        ec,
-        tds,
-        temperature,
-        measured_at
-      `)
+      .select("ec, tds, temperature, measured_at")
       .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
-      .lte("measured_at", endOfDay)
-      .order("measured_at", { ascending: false })
-      .limit(1);
+      .gte("measured_at", start)
+      .lte("measured_at", end);
 
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
+    if (error || !data || data.length === 0) {
       setEcData(null);
       return;
     }
 
-    const row = data[0];
+    const rows = data as EcRow[];
+
+    const avg = (values: number[]) =>
+      values.reduce((sum, v) => sum + v, 0) / values.length;
 
     setEcData({
-      ec: Number(row.ec),
-      tds: Number(row.tds),
-      temperature: Number(row.temperature),
-      measuredAt: row.measured_at, 
+      ec: Math.round(avg(rows.map(r => r.ec))),
+      tds: Math.round(avg(rows.map(r => r.tds))),
+      temperature: Number(
+        avg(rows.map(r => r.temperature)).toFixed(1)
+      ),
+      measuredAt: selectedDate,
     });
   };
 
@@ -246,7 +251,10 @@ export default function DailyRecordPageContainer() {
       fetchDailySensorData(selectedDate, 'room_temp', setRoomTempDaily);
       fetchDailySensorData(selectedDate, 'room_humid', setRoomHumidDaily);
       fetchDailySensorData(selectedDate, 'light', setLightDaily);
-      fetchEcDataBySelectedDate(selectedDate);
+      fetchEcDataBySelectedDate(
+        dayjs(selectedDate).format("YYYY-MM-DD")
+      );
+
     }, [selectedDate]);
 
   // 同じ時刻の温度と湿度を1レコードにまとめる
