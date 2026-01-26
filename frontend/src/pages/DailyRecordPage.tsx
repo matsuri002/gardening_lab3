@@ -71,6 +71,13 @@ export default function DailyRecordPageContainer() {
     plantType: string;
   }>();
 
+  type EcData = {
+    ec: number | null;
+    tds: number | null;
+    temperature: number | null;
+    measuredAt: string | null;
+  };
+
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
   const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
@@ -79,7 +86,12 @@ export default function DailyRecordPageContainer() {
   const [roomTempDaily, setRoomTempDaily] = useState<DailyDataPoint[]>([]);
   const [roomHumidDaily, setRoomHumidDaily] = useState<DailyDataPoint[]>([]);
   const [lightDaily, setLightDaily] = useState<DailyDataPoint[]>([]);
-
+  const [ecData, setEcData] = useState<EcData>({
+    ec: null,
+    tds: null,
+    temperature: null,
+    measuredAt: null,
+  });
   
 
   const fetchEnvironmentData = async (
@@ -198,6 +210,44 @@ export default function DailyRecordPageContainer() {
     }
   };
 
+  const fetchLatestEcData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("ec_measurements")
+        .select(`
+          ec,
+          tds,
+          temperature,
+          measured_at
+        `)
+        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .order("measured_at", { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        setEcData({
+          ec: null,
+          tds: null,
+          temperature: null,
+          measuredAt: null,
+        });
+        return;
+      }
+
+      const record = data[0];
+      setEcData({
+        ec: record.ec,
+        tds: record.tds,
+        temperature: record.temperature,
+        measuredAt: record.measured_at,
+      });
+    } catch (err) {
+      console.error("ECデータ取得失敗:", err);
+    }
+  };
+
   useEffect(() => {
     if (!selectedDate) return;
     fetchEnvironmentData(selectedDate);
@@ -206,6 +256,7 @@ export default function DailyRecordPageContainer() {
     fetchDailySensorData(selectedDate, 'room_temp', setRoomTempDaily);
     fetchDailySensorData(selectedDate, 'room_humid', setRoomHumidDaily);
     fetchDailySensorData(selectedDate, 'light', setLightDaily);
+    fetchLatestEcData();
   }, [selectedDate]);
 
   // 同じ時刻の温度と湿度を1レコードにまとめる
@@ -413,10 +464,13 @@ export default function DailyRecordPageContainer() {
                       EC値（電気伝導率）
                     </Typography>
                     <Typography variant='h6' fontWeight={600}>
-                      1.2 μs/cm
+                      {ecData.ec !== null ? `${ecData.ec} μS/cm` : "--"}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      週1回測定 - 最終測定 : 2025/12/29  {/* 最終測定日を表示 */}
+                      週1回測定 - 最終測定 :
+                      {ecData.measuredAt
+                        ? dayjs(ecData.measuredAt.replace('+00', '')).format('YYYY/MM/DD')
+                        : '--'}
                     </Typography>
                   </Stack>
                 </Stack>
