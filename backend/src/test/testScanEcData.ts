@@ -82,7 +82,9 @@ async function insertEcMeasurements(
 
   const { error } = await supabase
     .from("ec_measurements")
-    .insert(records);
+    .upsert(records, {
+    onConflict: "plant_id,measured_at",
+  });
 
   if (error) {
     throw error;
@@ -96,10 +98,10 @@ async function main() {
   const plantId = await getPlantId(plantName);
   console.log("plant_id =", plantId);
 
-//   const files = fs
-//     .readdirSync(ecDataDir)
-//     .filter((file) => file.endsWith(".csv"));
-  const files = ["EC_TDS_2025-12-08.csv"];
+  const files = fs
+    .readdirSync(ecDataDir)
+    .filter((file) => file.endsWith(".csv"));
+
 
   for (const file of files) {
     const fullCsvPath = path.join(ecDataDir, file);
