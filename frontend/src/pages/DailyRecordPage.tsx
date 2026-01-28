@@ -105,6 +105,7 @@ export default function DailyRecordPageContainer() {
   const [lightDaily, setLightDaily] = useState<DailyDataPoint[]>([]);
   const [ecData, setEcData] = useState<EcData | null>(null);
   const [co2Daily, setCo2Daily] = useState<Co2DataPoint[]>([]);
+  const [latestCo2, setLatestCo2] = useState<Co2DataPoint | null>(null);
   
 
   const fetchEnvironmentData = async (
@@ -280,11 +281,51 @@ export default function DailyRecordPageContainer() {
     });
   };
 
-  const fetchDailyCo2Data = async (
-    selectedDate: dayjs.Dayjs
-  ) => {
+  const fetchLatestCo2Data = async (selectedDate: dayjs.Dayjs) => {
+    const base = selectedDate.format("YYYY-MM-DD");
+    const isToday = selectedDate.isSame(dayjs(), "day");
+
+    let query = supabase
+      .from("co2_measurements")
+      .select("measured_at, co2")
+      .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945");
+
+    if (isToday) {
+      // 今日 → 最新1件
+      query = query
+        .gte("measured_at", `${base} 00:00:00`)
+        .lte("measured_at", `${base} 23:59:59`)
+        .order("measured_at", { ascending: false })
+        .limit(1);
+    } else {
+      // 過去日 → 閲覧時刻を6時間単位で丸める
+      const hour = Math.floor(dayjs().hour() / 6) * 6;
+      const targetHour = hour.toString().padStart(2, "0");
+
+      query = query
+        .gte("measured_at", `${base} ${targetHour}:00:00`)
+        .lte("measured_at", `${base} ${targetHour}:59:59`)
+        .order("measured_at", { ascending: false })
+        .limit(1);
+    }
+
+    const { data, error } = await query;
+    if (error || !data || data.length === 0) {
+      setLatestCo2(null);
+      return;
+    }
+
+    const row = data[0];
+
+    setLatestCo2({
+      time: dayjs.utc(row.measured_at).format("HH:mm"),
+      value: row.co2,
+    });
+  };
+
+  const fetchDailyCo2Data = async (selectedDate: dayjs.Dayjs) => {
     try {
-      const base = selectedDate.format("YYYY-MM-DD");      
+      const base = selectedDate.format("YYYY-MM-DD");
 
       const { data, error } = await supabase
         .from("co2_measurements")
@@ -292,10 +333,7 @@ export default function DailyRecordPageContainer() {
         .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
         .gte("measured_at", `${base} 00:00:00`)
         .lte("measured_at", `${base} 23:59:59`)
-        .order("measured_at", { ascending: true }) as {
-          data: Co2Row[] | null;
-          error: any;
-        };
+        .order("measured_at", { ascending: true });
 
       if (error) throw error;
 
@@ -304,18 +342,16 @@ export default function DailyRecordPageContainer() {
         return;
       }
 
-      const formatted = data
-        .filter(row => row.co2 !== null)
-        .map(row => ({
-          time: dayjs(row.measured_at.replace("+00", "")).format("HH:mm"),
+      const formatted: DailyDataPoint[] = data
+        .filter((row: Co2Row) => row.co2 !== null)
+        .map((row: Co2Row) => ({
+          time: dayjs.utc(row.measured_at).format("HH:mm"),
           value: row.co2 as number,
         }));
 
       setCo2Daily(formatted);
-      
-
     } catch (err) {
-      console.error("CO2 日内推移取得失敗:", err);
+      console.error("CO2 日内データ取得失敗:", err);
       setCo2Daily([]);
     }
   };
@@ -331,10 +367,9 @@ export default function DailyRecordPageContainer() {
       fetchEcDataBySelectedDate(
         dayjs(selectedDate).format("YYYY-MM-DD")
       );
+      fetchLatestCo2Data(selectedDate);
       fetchDailyCo2Data(selectedDate);
     }, [selectedDate]);
-
-    const latestCo2 =  co2Daily.length > 0 ? co2Daily[co2Daily.length - 1] : null;
 
   // 同じ時刻の温度と湿度を1レコードにまとめる
   const roomTHDaily = roomTempDaily.map((tempRow) => {
