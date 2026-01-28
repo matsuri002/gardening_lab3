@@ -71,6 +71,20 @@ export default function DailyRecordPageContainer() {
     plantType: string;
   }>();
 
+ type EcRow = {
+    ec: number;
+    tds: number;
+    temperature: number;
+    measured_at: string;
+  };
+
+  type EcData = {
+    ec: number;
+    tds: number;
+    temperature: number;
+    measuredAt: string;
+  };
+
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
   const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
@@ -79,7 +93,7 @@ export default function DailyRecordPageContainer() {
   const [roomTempDaily, setRoomTempDaily] = useState<DailyDataPoint[]>([]);
   const [roomHumidDaily, setRoomHumidDaily] = useState<DailyDataPoint[]>([]);
   const [lightDaily, setLightDaily] = useState<DailyDataPoint[]>([]);
-
+  const [ecData, setEcData] = useState<EcData | null>(null);
   
 
   const fetchEnvironmentData = async (
@@ -198,15 +212,76 @@ export default function DailyRecordPageContainer() {
     }
   };
 
-  useEffect(() => {
-    if (!selectedDate) return;
-    fetchEnvironmentData(selectedDate);
-    fetchDailySensorData(selectedDate, 'soil_temp', setSoilTempDaily);
-    fetchDailySensorData(selectedDate, 'soil_moisture', setSoilMoistureDaily);
-    fetchDailySensorData(selectedDate, 'room_temp', setRoomTempDaily);
-    fetchDailySensorData(selectedDate, 'room_humid', setRoomHumidDaily);
-    fetchDailySensorData(selectedDate, 'light', setLightDaily);
-  }, [selectedDate]);
+  // EC
+  const avg = (values: number[]) =>
+    values.reduce((a, b) => a + b, 0) / values.length;
+
+  const fetchEcRowsByDate = async (date: string) => {
+    const start = `${date} 00:00:00`;
+    const end = `${date} 23:59:59`;
+
+    const { data } = await supabase
+      .from("ec_measurements")
+      .select("ec, tds, temperature, measured_at")
+      .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+      .gte("measured_at", start)
+      .lte("measured_at", end);
+
+    return (data ?? []) as EcRow[];
+  };
+
+  const fetchEcDataBySelectedDate = async (selectedDate: string) => {
+    // 選択日のデータを試す
+    let rows = await fetchEcRowsByDate(selectedDate);
+
+    // なければ「過去で一番新しい日」を探す
+    if (rows.length === 0) {
+      const { data } = await supabase
+        .from("ec_measurements")
+        .select("measured_at")
+        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .lt("measured_at", `${selectedDate} 00:00:00`)
+        .order("measured_at", { ascending: false })
+        .limit(1);
+
+      if (!data || data.length === 0) {
+        setEcData(null);
+        return;
+      }
+
+      const latestDate = dayjs(data[0].measured_at).format("YYYY-MM-DD");
+      rows = await fetchEcRowsByDate(latestDate);
+
+      if (rows.length === 0) {
+        setEcData(null);
+        return;
+      }
+
+      selectedDate = latestDate;
+    }
+
+    // 平均して state にセット
+    setEcData({
+      ec: Math.round(avg(rows.map(r => r.ec))),
+      tds: Math.round(avg(rows.map(r => r.tds))),
+      temperature: Number(avg(rows.map(r => r.temperature)).toFixed(1)),
+      measuredAt: selectedDate,
+    });
+  };
+
+    useEffect(() => {
+      if (!selectedDate) return;
+      fetchEnvironmentData(selectedDate);
+      fetchDailySensorData(selectedDate, 'soil_temp', setSoilTempDaily);
+      fetchDailySensorData(selectedDate, 'soil_moisture', setSoilMoistureDaily);
+      fetchDailySensorData(selectedDate, 'room_temp', setRoomTempDaily);
+      fetchDailySensorData(selectedDate, 'room_humid', setRoomHumidDaily);
+      fetchDailySensorData(selectedDate, 'light', setLightDaily);
+      fetchEcDataBySelectedDate(
+        dayjs(selectedDate).format("YYYY-MM-DD")
+      );
+
+    }, [selectedDate]);
 
   // 同じ時刻の温度と湿度を1レコードにまとめる
   const roomTHDaily = roomTempDaily.map((tempRow) => {
@@ -412,11 +487,13 @@ export default function DailyRecordPageContainer() {
                     <Typography variant='subtitle1' color='text.primary'>
                       EC値（電気伝導率）
                     </Typography>
-                    <Typography variant='h6' fontWeight={600}>
-                      1.2 μs/cm
+                    <Typography variant="h6" fontWeight={600}>
+                      {ecData ? `${ecData.ec} μS/cm` : "--"}
                     </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      週1回測定 - 最終測定 : 2025/12/29  {/* 最終測定日を表示 */}
+                    <Typography variant="body2" color="text.secondary">
+                      {ecData
+                        ? `週1回測定 - 測定 : ${dayjs(ecData.measuredAt).format("YYYY/MM/DD")}`
+                        : "データなし"}
                     </Typography>
                   </Stack>
                 </Stack>

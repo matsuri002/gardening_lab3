@@ -29,6 +29,13 @@ export default function WeeklyRecordPageContainer() {
     min: number;
     avg: number;
   };
+
+  type EcWeeklyPoint = {
+    date: string;
+    ec: number;
+    tds: number;
+    temperature: number;
+  };
   
   const { plantType } = useParams<{
     plantType: string;
@@ -40,6 +47,7 @@ export default function WeeklyRecordPageContainer() {
   const [roomHumidWeekly, setRoomHumidWeekly] = useState<WeeklyStatPoint[]>([]);
   const [soilMoistureWeekly, setSoilMoistureWeekly] = useState<WeeklyStatPoint[]>([]);
   const [lightWeekly, setLightWeekly] = useState<WeeklyStatPoint[]>([]);
+  const [ecWeekly, setEcWeekly] = useState<EcWeeklyPoint[]>([]);
 
   const fetchWeeklyStats = async (
     endDate: dayjs.Dayjs,
@@ -88,6 +96,59 @@ export default function WeeklyRecordPageContainer() {
     });
   };
 
+  const fetchEcWeeklyData = async () => {
+    try {
+      // plant_id を指定して全期間の EC データを取得
+      const { data, error } = await supabase
+        .from("ec_measurements")
+        .select(`ec, tds, temperature, measured_at`)
+        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .order("measured_at", { ascending: true });
+
+      if (error || !data) {
+        console.error("ECデータ取得失敗:", error);
+        setEcWeekly([]);
+        return;
+      }
+
+      // 日付ごとにグループ化して平均を計算
+      const grouped: Record<string, EcWeeklyPoint[]> = {};
+
+      data.forEach((row: any) => {
+        if (row.ec == null) return;
+
+        const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push({
+          date,
+          ec: Number(row.ec),
+          tds: Number(row.tds),
+          temperature: Number(row.temperature),
+        });
+      });
+
+      // 日付ごとの平均を算出
+      const averaged = Object.entries(grouped).map(([date, rows]) => {
+        const ecAvg = rows.reduce((sum, r) => sum + r.ec, 0) / rows.length;
+        const tdsAvg = rows.reduce((sum, r) => sum + r.tds, 0) / rows.length;
+        const tempAvg = rows.reduce((sum, r) => sum + r.temperature, 0) / rows.length;
+
+        return {
+          date,
+          ec: Number(ecAvg.toFixed(1)),
+          tds: Number(tdsAvg.toFixed(1)),
+          temperature: Number(tempAvg.toFixed(1)),
+        };
+      });
+
+      setEcWeekly(averaged);
+
+    } catch (err) {
+      console.error("ECデータ取得失敗:", err);
+      setEcWeekly([]);
+    }
+  };
+
   useEffect(() => {
     if (!endDate) return;
 
@@ -96,6 +157,7 @@ export default function WeeklyRecordPageContainer() {
     fetchWeeklyStats(endDate, 'room_humid').then(setRoomHumidWeekly);
     fetchWeeklyStats(endDate, 'soil_moisture').then(setSoilMoistureWeekly);
     fetchWeeklyStats(endDate, 'light').then(setLightWeekly);
+    fetchEcWeeklyData();
   }, [endDate]);
 
   return (
@@ -310,9 +372,7 @@ export default function WeeklyRecordPageContainer() {
                 </Stack>
               </CardContent>
             </Card>
-          </Box>
 
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* CO2濃度7日間遷移 */}
             {/* 単純に数値を並べる 波打つようなグラフを想定 */}
             <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
@@ -327,17 +387,37 @@ export default function WeeklyRecordPageContainer() {
                 </Stack>
               </CardContent>
             </Card>
-
+          </Box>
+          <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* EC遷移 */}
             {/* ECのみ7日間ではなく全てのデータを表示する */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+            <Card sx={{width: '700px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
               <CardContent>
                 <Stack spacing={1} sx={{ width: '100%' }}> 
                   <Stack spacing={0.5} >                     
                     <Stack direction="row"  alignItems="center"> 
                       <BoltIcon sx={{ color: '#c0c185' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >EC値の推移（週次）</Typography>
+                      <Typography variant='subtitle1' color='text.primary' >EC値の推移（週次）</Typography>                      
                     </Stack>
+                    {ecWeekly.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        データがありません
+                      </Typography>
+                    ) : (
+                      <Box sx={{ width: '100%', height: 250}}>
+                        <ResponsiveContainer width="100%" height="100%" >
+                          <LineChart data={ecWeekly} margin={{ top: 20, right: 30, bottom: 20, left: 30 }} >
+                            <XAxis dataKey="date" />
+                            <YAxis tick={{ fontSize: 14 }} unit="μS/cm" />
+                            <Tooltip />
+                            <Legend />
+                            <Line dataKey="ec" name="EC" stroke="#c0c185" strokeWidth={2} dot={false} />
+                            {/* <Line dataKey="tds" name="TDS" stroke="#85a5c1" strokeWidth={2} dot={false} /> */}
+                            {/* <Line dataKey="temperature" name="温度" stroke="#c18585" strokeWidth={2} dot={false} /> */}
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </Box>
+                    )}
                   </Stack>
                 </Stack>
               </CardContent>
