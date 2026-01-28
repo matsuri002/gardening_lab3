@@ -212,33 +212,59 @@ export default function DailyRecordPageContainer() {
     }
   };
 
-  const fetchEcDataBySelectedDate = async (selectedDate: string) => {
-    const start = `${selectedDate} 00:00:00`;
-    const end = `${selectedDate} 23:59:59`;
+  // EC
+  const avg = (values: number[]) =>
+    values.reduce((a, b) => a + b, 0) / values.length;
 
-    const { data, error } = await supabase
+  const fetchEcRowsByDate = async (date: string) => {
+    const start = `${date} 00:00:00`;
+    const end = `${date} 23:59:59`;
+
+    const { data } = await supabase
       .from("ec_measurements")
       .select("ec, tds, temperature, measured_at")
       .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
       .gte("measured_at", start)
       .lte("measured_at", end);
 
-    if (error || !data || data.length === 0) {
-      setEcData(null);
-      return;
+    return (data ?? []) as EcRow[];
+  };
+
+  const fetchEcDataBySelectedDate = async (selectedDate: string) => {
+    // 選択日のデータを試す
+    let rows = await fetchEcRowsByDate(selectedDate);
+
+    // なければ「過去で一番新しい日」を探す
+    if (rows.length === 0) {
+      const { data } = await supabase
+        .from("ec_measurements")
+        .select("measured_at")
+        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .lt("measured_at", `${selectedDate} 00:00:00`)
+        .order("measured_at", { ascending: false })
+        .limit(1);
+
+      if (!data || data.length === 0) {
+        setEcData(null);
+        return;
+      }
+
+      const latestDate = dayjs(data[0].measured_at).format("YYYY-MM-DD");
+      rows = await fetchEcRowsByDate(latestDate);
+
+      if (rows.length === 0) {
+        setEcData(null);
+        return;
+      }
+
+      selectedDate = latestDate;
     }
 
-    const rows = data as EcRow[];
-
-    const avg = (values: number[]) =>
-      values.reduce((sum, v) => sum + v, 0) / values.length;
-
+    // 平均して state にセット
     setEcData({
       ec: Math.round(avg(rows.map(r => r.ec))),
       tds: Math.round(avg(rows.map(r => r.tds))),
-      temperature: Number(
-        avg(rows.map(r => r.temperature)).toFixed(1)
-      ),
+      temperature: Number(avg(rows.map(r => r.temperature)).toFixed(1)),
       measuredAt: selectedDate,
     });
   };
