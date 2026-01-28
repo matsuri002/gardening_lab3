@@ -36,6 +36,11 @@ export default function WeeklyRecordPageContainer() {
     tds: number;
     temperature: number;
   };
+
+  type Co2WeeklyPoint = {
+    datetime: string; // MM/DD HH:mm
+    value: number;
+  };
   
   const { plantType } = useParams<{
     plantType: string;
@@ -48,6 +53,7 @@ export default function WeeklyRecordPageContainer() {
   const [soilMoistureWeekly, setSoilMoistureWeekly] = useState<WeeklyStatPoint[]>([]);
   const [lightWeekly, setLightWeekly] = useState<WeeklyStatPoint[]>([]);
   const [ecWeekly, setEcWeekly] = useState<EcWeeklyPoint[]>([]);
+  const [co2Weekly, setCo2Weekly] = useState<Co2WeeklyPoint[]>([]);
 
   const fetchWeeklyStats = async (
     endDate: dayjs.Dayjs,
@@ -149,6 +155,39 @@ export default function WeeklyRecordPageContainer() {
     }
   };
 
+  const fetchWeeklyCo2Data = async (endDate: dayjs.Dayjs) => {
+    try {
+      const end = endDate.endOf("day");
+      const start = end.subtract(6, "day").startOf("day");
+
+      const { data, error } = await supabase
+        .from("co2_measurements")
+        .select("measured_at, co2")
+        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
+        .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"))
+        .order("measured_at", { ascending: true });
+
+      if (error || !data) {
+        setCo2Weekly([]);
+        return;
+      }
+
+      const formatted = data
+        .filter((row) => row.co2 != null)
+        .map((row) => ({
+          datetime: dayjs(row.measured_at.replace("+00", ""))
+            .format("MM/DD HH:mm"),
+          value: Number(row.co2),
+        }));
+
+      setCo2Weekly(formatted);
+    } catch (err) {
+      console.error("CO₂週次データ取得失敗:", err);
+      setCo2Weekly([]);
+    }
+  };
+
   useEffect(() => {
     if (!endDate) return;
 
@@ -158,6 +197,7 @@ export default function WeeklyRecordPageContainer() {
     fetchWeeklyStats(endDate, 'soil_moisture').then(setSoilMoistureWeekly);
     fetchWeeklyStats(endDate, 'light').then(setLightWeekly);
     fetchEcWeeklyData();
+    fetchWeeklyCo2Data(endDate);
   }, [endDate]);
 
   return (
@@ -383,6 +423,31 @@ export default function WeeklyRecordPageContainer() {
                       <SpeedIcon sx={{ color: '#85a5c1' }} /> 
                       <Typography variant='subtitle1' color='text.primary' >CO₂濃度の推移</Typography>
                     </Stack> 
+                    {co2Weekly.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary">
+                          データがありません
+                        </Typography>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={250}>
+                          <LineChart data={co2Weekly}>
+                            <XAxis
+                              dataKey="datetime"
+                              tick={{ fontSize: 12 }}
+                              interval="preserveStartEnd"
+                            />
+                            <YAxis unit="ppm" />
+                            <Tooltip />
+                            <Line
+                              dataKey="value"
+                              name="CO₂"
+                              stroke="#85a5c1"
+                              strokeWidth={2}
+                              dot
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      )}
+
                   </Stack>
                 </Stack>
               </CardContent>
