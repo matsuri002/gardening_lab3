@@ -85,6 +85,16 @@ export default function DailyRecordPageContainer() {
     measuredAt: string;
   };
 
+  type Co2Row = {
+    measured_at: string;
+    co2: number | null;
+  };
+
+  type Co2DataPoint = {
+    time: string;
+    value: number;
+  };
+
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
   const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
@@ -94,6 +104,7 @@ export default function DailyRecordPageContainer() {
   const [roomHumidDaily, setRoomHumidDaily] = useState<DailyDataPoint[]>([]);
   const [lightDaily, setLightDaily] = useState<DailyDataPoint[]>([]);
   const [ecData, setEcData] = useState<EcData | null>(null);
+  const [co2Daily, setCo2Daily] = useState<Co2DataPoint[]>([]);
   
 
   const fetchEnvironmentData = async (
@@ -269,6 +280,46 @@ export default function DailyRecordPageContainer() {
     });
   };
 
+  const fetchDailyCo2Data = async (
+    selectedDate: dayjs.Dayjs
+  ) => {
+    try {
+      const base = selectedDate.format("YYYY-MM-DD");      
+
+      const { data, error } = await supabase
+        .from("co2_measurements")
+        .select("measured_at, co2")
+        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .gte("measured_at", `${base} 00:00:00`)
+        .lte("measured_at", `${base} 23:59:59`)
+        .order("measured_at", { ascending: true }) as {
+          data: Co2Row[] | null;
+          error: any;
+        };
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        setCo2Daily([]);
+        return;
+      }
+
+      const formatted = data
+        .filter(row => row.co2 !== null)
+        .map(row => ({
+          time: dayjs(row.measured_at.replace("+00", "")).format("HH:mm"),
+          value: row.co2 as number,
+        }));
+
+      setCo2Daily(formatted);
+      
+
+    } catch (err) {
+      console.error("CO2 日内推移取得失敗:", err);
+      setCo2Daily([]);
+    }
+  };
+
     useEffect(() => {
       if (!selectedDate) return;
       fetchEnvironmentData(selectedDate);
@@ -280,8 +331,10 @@ export default function DailyRecordPageContainer() {
       fetchEcDataBySelectedDate(
         dayjs(selectedDate).format("YYYY-MM-DD")
       );
-
+      fetchDailyCo2Data(selectedDate);
     }, [selectedDate]);
+
+    const latestCo2 =  co2Daily.length > 0 ? co2Daily[co2Daily.length - 1] : null;
 
   // 同じ時刻の温度と湿度を1レコードにまとめる
   const roomTHDaily = roomTempDaily.map((tempRow) => {
@@ -464,11 +517,13 @@ export default function DailyRecordPageContainer() {
                     <Typography variant='subtitle1' color='text.primary'>
                       CO₂濃度
                     </Typography>
-                    <Typography variant='h6' fontWeight={600}>
-                      440 ppm
+                    <Typography variant="h6" fontWeight={600}>
+                      {latestCo2 ? `${latestCo2.value} ppm` : "--"}
                     </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      6時間毎測定 - 2026/01/17 0時時点
+                    <Typography variant="body2" color="text.secondary">
+                      {latestCo2
+                        ? `6時間毎測定 - ${latestCo2.time} 時点`
+                        : "データなし"}
                     </Typography>
                   </Stack>
                 </Stack>
@@ -649,18 +704,43 @@ export default function DailyRecordPageContainer() {
           </Box>
 
           {/* Co2濃度遷移 */}
-            <Card sx={{width: '1000px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+            <Card sx={{ width: '1000px', borderRadius: 3, boxShadow: 3, p:1 }}>
               <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'> 
-                  <Stack spacing={0.5} >                     
-                    <Stack direction="row"  alignItems="center">  
-                      <SpeedIcon sx={{ color: '#85a5c1' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >CO₂濃度の推移</Typography>
-                    </Stack> 
+                <Stack spacing={1} sx={{ width: '100%' }}>
+                  <Stack direction="row" alignItems="center">
+                    <SpeedIcon sx={{ color: '#85a5c1' }} />
+                    <Typography variant="subtitle1">
+                      CO₂濃度の推移
+                    </Typography>
                   </Stack>
+
+                  {co2Daily.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      データがありません
+                    </Typography>
+                  ) : (
+                    <Box sx={{ width: '100%', height: 300 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={co2Daily}>
+                          <XAxis dataKey="time" />
+                          <YAxis unit="ppm" />
+                          <Tooltip />
+                          <Line
+                            dataKey="value"
+                            name="CO₂"
+                            dot
+                            strokeWidth={2}
+                            stroke="#85a5c1"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </Box>
+                  )}
                 </Stack>
               </CardContent>
             </Card>
+          </Box>
 
         </Container>
       </Box>
