@@ -13,7 +13,7 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import BoltIcon from '@mui/icons-material/Bolt';
 import SpeedIcon from '@mui/icons-material/Speed';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } from 'recharts';
 import RecordTabs from '../components/Tab';
@@ -38,7 +38,8 @@ export default function WeeklyRecordPageContainer() {
   };
 
   type Co2WeeklyPoint = {
-    datetime: string; // MM/DD HH:mm
+    ts: number;          // 追加: UNIX ms
+    datetime: string;    // 表示用の整形文字列（Tooltipで使ってもOK）
     value: number;
   };
   
@@ -173,13 +174,17 @@ export default function WeeklyRecordPageContainer() {
         return;
       }
 
-      const formatted = data
+      const formatted: Co2WeeklyPoint[] = data
         .filter((row) => row.co2 != null)
-        .map((row) => ({
-          datetime: dayjs(row.measured_at.replace("+00", ""))
-            .format("MM/DD HH:mm"),
-          value: Number(row.co2),
-        }));
+        .map((row) => {
+          // ※ measured_at がUTCならタイムゾーン注意。今は既存の replace を踏襲
+          const m = dayjs(row.measured_at.replace("+00", ""));
+          return {
+            ts: m.valueOf(),                          // ← X軸の実値として使う
+            datetime: m.format("YYYY/MM/DD HH:mm"),   // ← Tooltip 表示用
+            value: Number(row.co2),
+          };
+        });
 
       setCo2Weekly(formatted);
     } catch (err) {
@@ -187,6 +192,19 @@ export default function WeeklyRecordPageContainer() {
       setCo2Weekly([]);
     }
   };
+
+  const xTicks = useMemo(() => {
+    const end = endDate.endOf('day');
+    const start = end.subtract(6, 'day').startOf('day');
+
+    const ticks: number[] = [];
+    let cur = start;
+    while (cur.isBefore(end) || cur.isSame(end, 'day')) {
+      ticks.push(cur.startOf('day').valueOf());
+      cur = cur.add(1, 'day');
+    }
+    return ticks;
+  }, [endDate]);
 
   useEffect(() => {
     if (!endDate) return;
@@ -431,18 +449,25 @@ export default function WeeklyRecordPageContainer() {
                         <ResponsiveContainer width="100%" height={250}>
                           <LineChart data={co2Weekly}>
                             <XAxis
-                              dataKey="datetime"
-                              tick={{ fontSize: 12 }}
-                              interval="preserveStartEnd"
+                              dataKey="ts"
+                              type="number"
+                              scale="time"
+                              domain={[xTicks[0], xTicks[xTicks.length - 1]]} // 表示範囲を 7 日間に固定
+                              ticks={xTicks}                                   // 各日の 00:00 に目盛り
+                              tickFormatter={(ts: number) => dayjs(ts).format("MM/DD")}
+                              interval={0}                                     // 指定した ticks をすべて表示
                             />
-                            <YAxis unit="ppm" />
-                            <Tooltip />
+                            <YAxis tick={{ fontSize: 14 }}unit="ppm" />
+                            <Tooltip
+                              // X 値（ts: number）を日時表示に
+                              labelFormatter={(ts: number) => dayjs(ts).format("MM/DD HH:mm")}
+                            />
                             <Line
                               dataKey="value"
                               name="CO₂"
                               stroke="#85a5c1"
                               strokeWidth={2}
-                              dot
+                              dot={false}
                             />
                           </LineChart>
                         </ResponsiveContainer>
