@@ -20,7 +20,7 @@ import RecordTabs from '../components/Tab';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
 import { useParams } from 'react-router-dom';
-import { ToggleButton, ToggleButtonGroup } from '@mui/material';
+import ViewModeToggle from '../components/ViewModeToggle';
 
 export default function WeeklyRecordPageContainer() {
 
@@ -376,15 +376,7 @@ export default function WeeklyRecordPageContainer() {
                       </Typography>
                     </Stack>
 
-                    <ToggleButtonGroup
-                      size="small"
-                      value={soilTempMode}
-                      exclusive
-                      onChange={(_, v) => v && setSoilTempMode(v)}
-                    >
-                      <ToggleButton value="standard">時系列</ToggleButton>
-                      <ToggleButton value="processed">集計</ToggleButton>
-                    </ToggleButtonGroup>
+                    <ViewModeToggle value={soilTempMode} onChange={setSoilTempMode} />
                   </Stack>
 
                   {/* 本体 */}
@@ -453,15 +445,7 @@ export default function WeeklyRecordPageContainer() {
                       </Typography>
                     </Stack>
 
-                    <ToggleButtonGroup
-                      size="small"
-                      value={soilMoistureMode}
-                      exclusive
-                      onChange={(_, v) => v && setSoilMoistureMode(v)}
-                    >
-                      <ToggleButton value="standard">時系列</ToggleButton>
-                      <ToggleButton value="processed">集計</ToggleButton>
-                    </ToggleButtonGroup>
+                    <ViewModeToggle value={soilMoistureMode} onChange={setSoilMoistureMode} />
                   </Stack>
 
                   {soilMoistureMode === 'standard' ? (
@@ -531,15 +515,7 @@ export default function WeeklyRecordPageContainer() {
                       </Typography>
                     </Stack>
 
-                    <ToggleButtonGroup
-                      size="small"
-                      value={roomTempMode}
-                      exclusive
-                      onChange={(_, v) => v && setRoomTempMode(v)}
-                    >
-                      <ToggleButton value="standard">時系列</ToggleButton>
-                      <ToggleButton value="processed">集計</ToggleButton>
-                    </ToggleButtonGroup>
+                    <ViewModeToggle value={roomTempMode} onChange={setRoomTempMode} />
                   </Stack>
 
                   {roomTempMode === 'standard' ? (
@@ -607,15 +583,7 @@ export default function WeeklyRecordPageContainer() {
                       </Typography>
                     </Stack>
 
-                    <ToggleButtonGroup
-                      size="small"
-                      value={roomHumidMode}
-                      exclusive
-                      onChange={(_, v) => v && setRoomHumidMode(v)}
-                    >
-                      <ToggleButton value="standard">時系列</ToggleButton>
-                      <ToggleButton value="processed">集計</ToggleButton>
-                    </ToggleButtonGroup>
+                    <ViewModeToggle value={roomHumidMode} onChange={setRoomHumidMode} />
                   </Stack>
 
                   {roomHumidMode === 'standard' ? (
@@ -685,15 +653,7 @@ export default function WeeklyRecordPageContainer() {
                       </Typography>
                     </Stack>
 
-                    <ToggleButtonGroup
-                      size="small"
-                      value={lightMode}
-                      exclusive
-                      onChange={(_, v) => v && setLightMode(v)}
-                    >
-                      <ToggleButton value="standard">時系列</ToggleButton>
-                      <ToggleButton value="processed">集計</ToggleButton>
-                    </ToggleButtonGroup>
+                    <ViewModeToggle value={lightMode} onChange={setLightMode} />
                   </Stack>
 
                   {lightMode === 'standard' ? (
