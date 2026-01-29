@@ -31,6 +31,7 @@ import RecordTabs from "../components/Tab";
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
 import { useParams } from 'react-router-dom';
+import ChartCardFrame from '../components/ChartCardFrame';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -594,187 +595,170 @@ export default function DailyRecordPageContainer() {
           {/* 土壌温度、土壌水分量の日内推移 */}
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* 土壌温度推移 */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >                     
-                    <Stack direction="row"  alignItems="center">               
-                      <ThermostatIcon sx={{ color: '#c1a185' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >土壌温度の推移</Typography>
-                    </Stack>
-                    {soilTempDaily.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary">
-                          データがありません
-                        </Typography>
-                      ) : (
-                        <Box sx={{ width: '100%', height: 250 }}>
-                          <ResponsiveContainer width="100%" height={250}>
-                            <LineChart data={soilTempDaily}>
-                              <XAxis dataKey="time" />
-                              <YAxis unit="°C" />
-                              <Tooltip />
-                              <Line dataKey="value" name="土壌温度" strokeWidth={2} dot={false} stroke="#c1a185" />
-                            </LineChart>
-                          </ResponsiveContainer>
-                        </Box>
-                      )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <ChartCardFrame
+              title="土壌温度の推移"
+              icon={<ThermostatIcon sx={{ color: "#c1a185" }} />}
+              width={500}
+            >
+              {soilTempDaily.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  データがありません
+                </Typography>
+              ) : (
+                <Box sx={{ width: "100%", height: 250 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={soilTempDaily}>
+                      <XAxis dataKey="time" />
+                      <YAxis unit="°C" />
+                      <Tooltip />
+                      <Line
+                        dataKey="value"
+                        name="土壌温度"
+                        strokeWidth={2}
+                        dot={false}
+                        stroke="#c1a185"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              )}
+            </ChartCardFrame>
 
             {/* 土壌水分量推移 */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}>
-                  <Stack spacing={0.5} >                     
-                    <Stack direction="row"  alignItems="center">                 
-                      <WaterDropIcon sx={{ color: '#85a5c1' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >土壌水分量の推移</Typography>                    
-                    </Stack>
-                    {soilMoistureDaily.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        データがありません
-                      </Typography>
-                    ) : (
-                      <Box sx={{ width: '100%', height: 250 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={soilMoistureDaily}>
-                            <XAxis dataKey="time" />
-                            <YAxis unit="" />
-                            <Tooltip />
-                            <Line dataKey="value" name="土壌水分量" dot={false} strokeWidth={2} stroke="#85a5c1" />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </Box>
-                    )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <ChartCardFrame
+              title="土壌水分量の推移"
+              icon={<WaterDropIcon sx={{ color: "#85a5c1" }} />}
+              width={500}
+            >
+              {soilMoistureDaily.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  データがありません
+                </Typography>
+              ) : (
+                <Box sx={{ width: "100%", height: 250 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={soilMoistureDaily}>
+                      <XAxis dataKey="time" />
+                      <YAxis unit="" />
+                      <Tooltip />
+                      <Line
+                        dataKey="value"
+                        name="土壌水分量"
+                        dot={false}
+                        strokeWidth={2}
+                        stroke="#85a5c1"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              )}
+            </ChartCardFrame>
           </Box>
 
           {/* 室内温湿度、日射量の日内推移 */}
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* 室内温湿度推移 */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}>
-                  <Stack spacing={0.5} >                     
-                    <Stack direction="row"  alignItems="center">                  
-                      <ThermostatIcon sx={{ color: '#A395A3' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >室内温湿度の推移</Typography>
-                    </Stack>
-                    {/* 室内温湿度 */}
-                    {roomTHDaily.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        データがありません
-                      </Typography>
-                    ) : (
-                      <Box sx={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={roomTHDaily}>
-                            <XAxis dataKey="time" />
-
-                            <YAxis yAxisId="left" unit="°C" />
-                            <YAxis yAxisId="right" orientation="right" unit="%" />
-
-                            <Tooltip />
-                            <Legend />
-
-                            <Line
-                              yAxisId="left"
-                              dataKey="temp"
-                              dot={false}
-                              strokeWidth={2}
-                              name="室内温度"
-                              stroke="#c18585"
-                            />
-                            <Line
-                              yAxisId="right"
-                              dataKey="humid"
-                              dot={false}
-                              strokeWidth={2}
-                              name="室内湿度"
-                              stroke="#85a5c1"
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </Box>
-                    )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <ChartCardFrame
+              title="室内温湿度の推移"
+              icon={<ThermostatIcon sx={{ color: "#A395A3" }} />}
+              width={500}
+            >
+              {roomTHDaily.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  データがありません
+                </Typography>
+              ) : (
+                <Box sx={{ width: "100%", height: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={roomTHDaily}>
+                      <XAxis dataKey="time" />
+                      <YAxis yAxisId="left" unit="°C" />
+                      <YAxis yAxisId="right" orientation="right" unit="%" />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        yAxisId="left"
+                        dataKey="temp"
+                        dot={false}
+                        strokeWidth={2}
+                        name="室内温度"
+                        stroke="#c18585"
+                      />
+                      <Line
+                        yAxisId="right"
+                        dataKey="humid"
+                        dot={false}
+                        strokeWidth={2}
+                        name="室内湿度"
+                        stroke="#85a5c1"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              )}
+            </ChartCardFrame>
 
             {/* 日射量推移 */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}>
-                  <Stack spacing={0.5} >                     
-                    <Stack direction="row"  alignItems="center">                  
-                      <SunnyIcon sx={{ color: '#c18585' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >日射量の推移</Typography>                    
-                    </Stack>
-                    {lightDaily.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        データがありません
-                      </Typography>
-                    ) : (
-                      <Box sx={{ width: '100%', height: 250 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={lightDaily}>
-                            <XAxis dataKey="time" />
-                            <YAxis tick={{ fontSize: 14 }} unit="lux" />
-                            <Tooltip />
-                            <Line dataKey="value" name="日射量" dot={false} strokeWidth={2} stroke="#c18585" />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </Box>
-                    )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <ChartCardFrame
+              title="日射量の推移"
+              icon={<SunnyIcon sx={{ color: "#c18585" }} />}
+              width={500}
+            >
+              {lightDaily.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  データがありません
+                </Typography>
+              ) : (
+                <Box sx={{ width: "100%", height: 250 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={lightDaily}>
+                      <XAxis dataKey="time" />
+                      <YAxis tick={{ fontSize: 14 }} unit="lux" />
+                      <Tooltip />
+                      <Line
+                        dataKey="value"
+                        name="日射量"
+                        dot={false}
+                        strokeWidth={2}
+                        stroke="#c18585"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              )}
+            </ChartCardFrame>
           </Box>
 
           {/* Co2濃度遷移 */}
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
-            <Card sx={{ width: '1000px', borderRadius: 3, boxShadow: 3, p:1 }}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}>
-                  <Stack direction="row" alignItems="center">
-                    <SpeedIcon sx={{ color: '#85a5c1' }} />
-                    <Typography variant="subtitle1">
-                      CO₂濃度の推移
-                    </Typography>
-                  </Stack>
-
-                  {co2Daily.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      データがありません
-                    </Typography>
-                  ) : (
-                    <Box sx={{ width: '100%', height: 300 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={co2Daily}>
-                          <XAxis dataKey="time" />
-                          <YAxis unit="ppm" />
-                          <Tooltip />
-                          <Line
-                            dataKey="value"
-                            name="CO₂"
-                            dot
-                            strokeWidth={2}
-                            stroke="#85a5c1"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </Box>
-                  )}
-                </Stack>
-              </CardContent>
-            </Card>
+            <ChartCardFrame
+              title="CO₂濃度の推移"
+              icon={<SpeedIcon sx={{ color: "#85a5c1" }} />}
+              width={1000}
+            >
+              {co2Daily.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  データがありません
+                </Typography>
+              ) : (
+                <Box sx={{ width: "100%", height: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={co2Daily} margin={{ right: 30, left: 30 }}>
+                      <XAxis dataKey="time" />
+                      <YAxis unit="ppm" />
+                      <Tooltip />
+                      <Line
+                        dataKey="value"
+                        name="CO₂"
+                        dot
+                        strokeWidth={2}
+                        stroke="#85a5c1"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              )}
+            </ChartCardFrame>
           </Box>
 
         </Container>
