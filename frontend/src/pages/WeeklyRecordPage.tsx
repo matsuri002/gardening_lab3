@@ -377,6 +377,7 @@ export default function WeeklyRecordPageContainer() {
                 { key: "min", name: "最低温度", stroke: "#85a5c1" },
               ]}
               referenceAreas={komatsunaTempRange}
+              enableReferenceDomain
             />
 
             {/* 土壌水分量7日間推移 */}
@@ -400,6 +401,7 @@ export default function WeeklyRecordPageContainer() {
                 { key: "avg", name: "平均値", stroke: "#92c185" },
                 { key: "min", name: "最小値", stroke: "#85a5c1" },
               ]}
+              enableReferenceDomain={false}
             />
           </Box>
 
@@ -427,6 +429,7 @@ export default function WeeklyRecordPageContainer() {
                 { key: "min", name: "最低温度", stroke: "#85a5c1" },
               ]}
               referenceAreas={komatsunaTempRange}
+              enableReferenceDomain
             />
 
             {/* 室内湿度7日間推移 */}
@@ -451,6 +454,7 @@ export default function WeeklyRecordPageContainer() {
                 { key: "avg", name: "平均湿度", stroke: "#92c185" },
                 { key: "min", name: "最低湿度", stroke: "#85a5c1" },
               ]}
+              enableReferenceDomain={false}
             />
           </Box>
 
@@ -472,6 +476,7 @@ export default function WeeklyRecordPageContainer() {
                 (min) => Math.max(0, Math.floor(min - 50)),
                 (max) => Math.ceil(max + 50),
               ]}
+               enableReferenceDomain={false}
             />
 
             {/* CO2濃度7日間遷移 */}

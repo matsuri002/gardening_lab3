@@ -51,6 +51,8 @@ type Props = {
     label: string;
     fill: string;
   }[];
+
+  enableReferenceDomain?: boolean;
 };
 
 const defaultProcessedLines: ProcessedLineConfig[] = [
@@ -72,7 +74,8 @@ export default function DualModeChartCard({
   processedLines = defaultProcessedLines,
   cardSx,
   chartMargin = { right: 20, left: 20 },
-  referenceAreas
+  referenceAreas,
+  enableReferenceDomain
 }: Props) {
   const isStandard = mode === "standard";
   const empty = isStandard ? rawData.length === 0 : processedData.length === 0;
@@ -105,6 +108,17 @@ export default function DualModeChartCard({
    Math.min(...dataValuesProcessed, referenceMin),
    Math.max(...dataValuesProcessed, referenceMax),
   ];
+
+  const enableRef = enableReferenceDomain && referenceAreas?.length;
+
+  const yDomainStandardFinal = enableRef
+    ? computedDomainStandard
+    : ['auto', 'auto'];
+
+  const yDomainProcessedFinal = enableRef
+    ? computedDomainProcessed
+    : ['auto', 'auto'];
+
 
   return (
     <Card sx={{ width: "700px", borderRadius: 3, boxShadow: 3, p: 1, ...cardSx }}>
@@ -140,8 +154,8 @@ export default function DualModeChartCard({
                   tick={{ fontSize: 12 }}
                 />
                 <YAxis
-                    unit={unit}
-                    domain={isStandard ? computedDomainStandard : computedDomainProcessed}
+                  unit={unit}
+                  domain={isStandard ? yDomainStandardFinal : yDomainProcessedFinal}
                 />
 
                 {referenceAreas?.map((r, i) => (
@@ -166,8 +180,8 @@ export default function DualModeChartCard({
               <LineChart data={processedData} margin={chartMargin}>
                 <XAxis dataKey="date" />
                 <YAxis
-                    unit={unit}
-                    domain={isStandard ? computedDomainStandard : computedDomainProcessed}
+                  unit={unit}
+                  domain={isStandard ? yDomainStandardFinal : yDomainProcessedFinal}
                 />
 
                 {referenceAreas?.map((r, i) => (
