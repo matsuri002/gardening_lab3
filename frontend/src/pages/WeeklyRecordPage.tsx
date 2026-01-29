@@ -206,6 +206,32 @@ export default function WeeklyRecordPageContainer() {
     return ticks;
   }, [endDate]);
 
+ // co2日平均
+  // const { co2DailyAvg } = useMemo(() => {
+  //   if (co2Weekly.length === 0) {
+  //     return { co2DailyAvg: [] as { ts: number; avg: number }[], dailyAvgMap: new Map<string, number>() };
+  //   }
+
+  //   const groups = new Map<string, number[]>();
+  //   for (const p of co2Weekly) {
+  //     const dayKey = dayjs(p.ts).format('YYYY-MM-DD');
+  //     if (!groups.has(dayKey)) groups.set(dayKey, []);
+  //     groups.get(dayKey)!.push(p.value);
+  //   }
+
+  //   const co2DailyAvg = Array.from(groups.entries()).map(([dayKey, arr]) => {
+  //     const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+  //     return {
+  //       ts: dayjs(dayKey + ' 00:00').valueOf(),
+  //       avg: Number(avg.toFixed(0)), // 小数不要なら丸め
+  //     };
+  //   }).sort((a, b) => a.ts - b.ts);
+
+  //   const dailyAvgMap = new Map(co2DailyAvg.map(d => [dayjs(d.ts).format('YYYY-MM-DD'), d.avg]));
+
+  //   return { co2DailyAvg, dailyAvgMap };
+  // }, [co2Weekly]);
+
   useEffect(() => {
     if (!endDate) return;
 
@@ -447,15 +473,16 @@ export default function WeeklyRecordPageContainer() {
                         </Typography>
                       ) : (
                         <ResponsiveContainer width="100%" height={250}>
-                          <LineChart data={co2Weekly}>
+                          <LineChart data={co2Weekly} margin={{ right: 20, left: 10 }}>
                             <XAxis
                               dataKey="ts"
                               type="number"
                               scale="time"
-                              domain={[xTicks[0], xTicks[xTicks.length - 1]]} // 表示範囲を 7 日間に固定
-                              ticks={xTicks}                                   // 各日の 00:00 に目盛り
+                              domain={[xTicks[0], xTicks[xTicks.length - 1]]}
+                              ticks={xTicks}
                               tickFormatter={(ts: number) => dayjs(ts).format("MM/DD")}
-                              interval={0}                                     // 指定した ticks をすべて表示
+                              interval={0}
+                              tick={{ fontSize: 14 }}
                             />
                             <YAxis tick={{ fontSize: 14 }}unit="ppm" />
                             <Tooltip
@@ -469,6 +496,18 @@ export default function WeeklyRecordPageContainer() {
                               strokeWidth={2}
                               dot={false}
                             />
+                            {/* 日平均 */}
+                            {/* <Line
+                              data={co2DailyAvg}
+                              dataKey="avg"
+                              name="日平均"
+                              stroke="#c18585"
+                              strokeWidth={2}
+                              dot={{ r: 2 }}
+                              connectNulls
+                              strokeDasharray="6 4" // 破線
+                              isAnimationActive={false} // 初回アニメ重い場合はオフ
+                            /> */}
                           </LineChart>
                         </ResponsiveContainer>
                       )}
