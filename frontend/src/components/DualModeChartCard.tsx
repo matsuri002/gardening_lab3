@@ -66,13 +66,13 @@ export default function DualModeChartCard({
   yDomainProcessed,
   processedLines = defaultProcessedLines,
   cardSx,
-  chartMargin = { right: 20, left: 10 },
+  chartMargin = { right: 20, left: 20 },
 }: Props) {
   const isStandard = mode === "standard";
   const empty = isStandard ? rawData.length === 0 : processedData.length === 0;
 
   return (
-    <Card sx={{ width: "500px", borderRadius: 3, boxShadow: 3, p: 1, ...cardSx }}>
+    <Card sx={{ width: "700px", borderRadius: 3, boxShadow: 3, p: 1, ...cardSx }}>
       <CardContent>
         <Stack spacing={1} sx={{ width: "100%" }}>
           {/* Header */}
@@ -122,7 +122,7 @@ export default function DualModeChartCard({
             </ResponsiveContainer>
           ) : (
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={processedData}>
+              <LineChart data={processedData} margin={chartMargin}>
                 <XAxis dataKey="date" />
                 <YAxis
                   unit={unit}

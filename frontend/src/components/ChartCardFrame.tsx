@@ -14,7 +14,7 @@ export default function ChartCardFrame({
   icon,
   action,
   children,
-  width = 500,
+  width = 700,
 }: Props) {
   return (
     <Card sx={{ width, borderRadius: 3, boxShadow: 3, p: 1 }}>

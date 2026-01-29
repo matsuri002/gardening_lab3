@@ -598,7 +598,6 @@ export default function DailyRecordPageContainer() {
             <ChartCardFrame
               title="土壌温度の推移"
               icon={<ThermostatIcon sx={{ color: "#c1a185" }} />}
-              width={500}
             >
               {soilTempDaily.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
@@ -628,7 +627,6 @@ export default function DailyRecordPageContainer() {
             <ChartCardFrame
               title="土壌水分量の推移"
               icon={<WaterDropIcon sx={{ color: "#85a5c1" }} />}
-              width={500}
             >
               {soilMoistureDaily.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
@@ -661,7 +659,6 @@ export default function DailyRecordPageContainer() {
             <ChartCardFrame
               title="室内温湿度の推移"
               icon={<ThermostatIcon sx={{ color: "#A395A3" }} />}
-              width={500}
             >
               {roomTHDaily.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
@@ -702,7 +699,6 @@ export default function DailyRecordPageContainer() {
             <ChartCardFrame
               title="日射量の推移"
               icon={<SunnyIcon sx={{ color: "#c18585" }} />}
-              width={500}
             >
               {lightDaily.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
@@ -710,8 +706,8 @@ export default function DailyRecordPageContainer() {
                 </Typography>
               ) : (
                 <Box sx={{ width: "100%", height: 250 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={lightDaily}>
+                  <ResponsiveContainer width="100%" height="110%">
+                    <LineChart data={lightDaily} >
                       <XAxis dataKey="time" />
                       <YAxis tick={{ fontSize: 14 }} unit="lux" />
                       <Tooltip />
@@ -734,7 +730,7 @@ export default function DailyRecordPageContainer() {
             <ChartCardFrame
               title="CO₂濃度の推移"
               icon={<SpeedIcon sx={{ color: "#85a5c1" }} />}
-              width={1000}
+              width={700}
             >
               {co2Daily.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
