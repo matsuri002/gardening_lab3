@@ -1,9 +1,4 @@
-import {
-  Typography, Box, Container,
-  Card,
-  CardContent,
-  Stack,
-  } from '@mui/material';
+import { Typography, Box, Container, Stack } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -13,13 +8,15 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import BoltIcon from '@mui/icons-material/Bolt';
 import SpeedIcon from '@mui/icons-material/Speed';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } from 'recharts';
 import RecordTabs from '../components/Tab';
 import Header from '../components/Header';
 import BackButton from '../components/BackButton';
 import { useParams } from 'react-router-dom';
+import DualModeChartCard from '../components/DualModeChartCard';
+import ChartCardFrame from '../components/ChartCardFrame';
 
 export default function WeeklyRecordPageContainer() {
 
@@ -36,6 +33,17 @@ export default function WeeklyRecordPageContainer() {
     tds: number;
     temperature: number;
   };
+
+  type Co2WeeklyPoint = {
+    ts: number;          // 追加: UNIX ms
+    datetime: string;    // 表示用の整形文字列（Tooltipで使ってもOK）
+    value: number;
+  };
+
+  type RawPoint = {
+    ts: number;
+    value: number;
+  };
   
   const { plantType } = useParams<{
     plantType: string;
@@ -48,6 +56,7 @@ export default function WeeklyRecordPageContainer() {
   const [soilMoistureWeekly, setSoilMoistureWeekly] = useState<WeeklyStatPoint[]>([]);
   const [lightWeekly, setLightWeekly] = useState<WeeklyStatPoint[]>([]);
   const [ecWeekly, setEcWeekly] = useState<EcWeeklyPoint[]>([]);
+  const [co2Weekly, setCo2Weekly] = useState<Co2WeeklyPoint[]>([]);
 
   const fetchWeeklyStats = async (
     endDate: dayjs.Dayjs,
@@ -95,6 +104,63 @@ export default function WeeklyRecordPageContainer() {
       };
     });
   };
+
+  const fetchWeeklyRawData = async (
+    endDate: dayjs.Dayjs,
+    column:
+      | 'soil_temp'
+      | 'room_temp'
+      | 'room_humid'
+      | 'soil_moisture'
+      | 'light'
+  ): Promise<RawPoint[]> => {
+    const end = endDate.endOf('day');
+    const start = end.subtract(6, 'day').startOf('day');
+
+    const { data, error } = await supabase
+      .from('environment_measurements')
+      .select(`measured_at, ${column}`)
+      .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+      .gte('measured_at', start.format('YYYY-MM-DD HH:mm:ss'))
+      .lte('measured_at', end.format('YYYY-MM-DD HH:mm:ss'))
+      .order('measured_at', { ascending: true });
+
+    if (error || !data) return [];
+
+    return data
+      .filter((row: any) => row[column] != null)
+      .map((row: any) => {
+        const m = dayjs(row.measured_at.replace('+00', ''));
+        return { ts: m.valueOf(), value: Number(row[column]) };
+      });
+  };
+
+  type ViewMode = 'standard' | 'processed';
+
+  const [soilTempMode, setSoilTempMode] = useState<ViewMode>('standard');
+  const [soilMoistureMode, setSoilMoistureMode] = useState<ViewMode>('standard');
+  const [roomTempMode, setRoomTempMode] = useState<ViewMode>('standard');
+  const [roomHumidMode, setRoomHumidMode] = useState<ViewMode>('standard');
+  const [lightMode, setLightMode] = useState<ViewMode>('processed');
+
+  // 生データ state（時系列表示用）
+  const [soilTempRaw, setSoilTempRaw] = useState<RawPoint[]>([]);
+  const [soilMoistureRaw, setSoilMoistureRaw] = useState<RawPoint[]>([]);
+  const [roomTempRaw, setRoomTempRaw] = useState<RawPoint[]>([]);
+  const [roomHumidRaw, setRoomHumidRaw] = useState<RawPoint[]>([]);
+  const [lightRaw, setLightRaw] = useState<RawPoint[]>([]);
+
+  const xTicks7 = useMemo(() => {
+    const end = endDate.startOf('day'); // 最終日の 00:00
+    const start = end.subtract(6, 'day'); // 6日前の 00:00
+    return Array.from({ length: 7 }, (_, i) => start.add(i, 'day').valueOf());
+  }, [endDate]);
+  
+  const xDomain7: [number, number] = useMemo(() => {
+    // 7日目の終わりまで表示（最終日の 23:59:59.999）
+    const end = xTicks7[6] + 24 * 60 * 60 * 1000 - 1;
+    return [xTicks7[0], end];
+  }, [xTicks7]);
 
   const fetchEcWeeklyData = async () => {
     try {
@@ -149,16 +215,74 @@ export default function WeeklyRecordPageContainer() {
     }
   };
 
+  const fetchWeeklyCo2Data = async (endDate: dayjs.Dayjs) => {
+    try {
+      const end = endDate.endOf("day");
+      const start = end.subtract(6, "day").startOf("day");
+
+      const { data, error } = await supabase
+        .from("co2_measurements")
+        .select("measured_at, co2")
+        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
+        .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"))
+        .order("measured_at", { ascending: true });
+
+      if (error || !data) {
+        setCo2Weekly([]);
+        return;
+      }
+
+      const formatted: Co2WeeklyPoint[] = data
+        .filter((row) => row.co2 != null)
+        .map((row) => {
+          // ※ measured_at がUTCならタイムゾーン注意。今は既存の replace を踏襲
+          const m = dayjs(row.measured_at.replace("+00", ""));
+          return {
+            ts: m.valueOf(),                          // ← X軸の実値として使う
+            datetime: m.format("YYYY/MM/DD HH:mm"),   // ← Tooltip 表示用
+            value: Number(row.co2),
+          };
+        });
+
+      setCo2Weekly(formatted);
+    } catch (err) {
+      console.error("CO₂週次データ取得失敗:", err);
+      setCo2Weekly([]);
+    }
+  };
+
   useEffect(() => {
     if (!endDate) return;
-
-    fetchWeeklyStats(endDate, 'soil_temp').then(setSoilTempWeekly);
-    fetchWeeklyStats(endDate, 'room_temp').then(setRoomTempWeekly);
-    fetchWeeklyStats(endDate, 'room_humid').then(setRoomHumidWeekly);
-    fetchWeeklyStats(endDate, 'soil_moisture').then(setSoilMoistureWeekly);
-    fetchWeeklyStats(endDate, 'light').then(setLightWeekly);
+    if (soilTempMode === 'standard') {
+      fetchWeeklyRawData(endDate, 'soil_temp').then(setSoilTempRaw);
+    } else {
+      fetchWeeklyStats(endDate, 'soil_temp').then(setSoilTempWeekly);
+    }
+    if (soilMoistureMode === 'standard') {
+      fetchWeeklyRawData(endDate, 'soil_moisture').then(setSoilMoistureRaw);
+    } else {
+      fetchWeeklyStats(endDate, 'soil_moisture').then(setSoilMoistureWeekly);
+    }
+    if (roomTempMode === 'standard') {
+      fetchWeeklyRawData(endDate, 'room_temp').then(setRoomTempRaw);
+    } else {
+      fetchWeeklyStats(endDate, 'room_temp').then(setRoomTempWeekly);
+    }
+    if (roomHumidMode === 'standard') {
+      fetchWeeklyRawData(endDate, 'room_humid').then(setRoomHumidRaw);
+    } else {
+      fetchWeeklyStats(endDate, 'room_humid').then(setRoomHumidWeekly);
+    }
+    if (lightMode === 'standard') {
+      fetchWeeklyRawData(endDate, 'light').then(setLightRaw);
+    } else {
+      fetchWeeklyStats(endDate, 'light').then(setLightWeekly);
+    }
     fetchEcWeeklyData();
-  }, [endDate]);
+    fetchWeeklyCo2Data(endDate);
+
+  }, [endDate, soilTempMode, soilMoistureMode, roomTempMode, roomHumidMode, lightMode]);
 
   return (
     <Box 
@@ -206,222 +330,184 @@ export default function WeeklyRecordPageContainer() {
             {endDate.format('MM/DD')}
           </Typography>
 
-          {/* TODO: 各グラフにスクロールバーを付ける */}
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* 土壌温度7日間推移 */}
-            {/* 1日の最高、最低、平均温度を7日間表示する */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >  
-                    <Stack direction="row"  alignItems="center">               
-                      <ThermostatIcon sx={{ color: '#c1a185' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >土壌温度の推移</Typography>
-                    </Stack>
-                    {soilTempWeekly.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        データがありません
-                      </Typography>
-                    ) : (
-                      <ResponsiveContainer width="100%" height={250}>
-                        <LineChart data={soilTempWeekly}>
-                          <XAxis dataKey="date" />
-                          <YAxis unit="°C" />
-                          <Tooltip />
-                          <Legend />
-                          <Line dataKey="max" name="最高温度" stroke="#c18585"  strokeWidth={2} />
-                          <Line dataKey="avg" name="平均温度" stroke="#92c185" strokeWidth={2} />
-                          <Line dataKey="min" name="最低温度" stroke="#85a5c1" strokeWidth={2} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <DualModeChartCard
+              title="土壌温度の推移"
+              icon={<ThermostatIcon sx={{ color: "#c1a185" }} />}
+              mode={soilTempMode}
+              onModeChange={setSoilTempMode}
+              rawData={soilTempRaw}
+              processedData={soilTempWeekly}
+              xTicks7={xTicks7}
+              xDomain7={xDomain7}
+              unit="°C"
+              tooltipValueLabel="温度"
+              tooltipUnitSuffix="°C"
+              yDomainStandard={[
+                (min) => Math.floor(min - 1),
+                (max) => Math.ceil(max + 1),
+              ]}
+              processedLines={[
+                { key: "max", name: "最高温度", stroke: "#c18585" },
+                { key: "avg", name: "平均温度", stroke: "#92c185" },
+                { key: "min", name: "最低温度", stroke: "#85a5c1" },
+              ]}
+            />
 
             {/* 土壌水分量7日間推移 */}
             {/* 表示方法（アナログ値or%）は要検討 */}
-            {/* 1日の最高、最低、平均温度を7日間表示する */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >    
-                    <Stack direction="row"  alignItems="center">                 
-                      <WaterDropIcon sx={{ color: '#85a5c1' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >土壌水分量の推移</Typography>                    
-                    </Stack>
-                      {soilMoistureWeekly.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary">
-                          データがありません
-                        </Typography>
-                      ) : (
-                        <ResponsiveContainer width="100%" height={250}>
-                          <LineChart data={soilMoistureWeekly}>
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Line dataKey="max" name="最大値" stroke="#c18585" strokeWidth={2} />
-                            <Line dataKey="avg" name="平均値" stroke="#92c185" strokeWidth={2} />
-                            <Line dataKey="min" name="最小値" stroke="#85a5c1" strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      )}                  
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <DualModeChartCard
+              title="土壌水分量の推移"
+              icon={<WaterDropIcon sx={{ color: "#85a5c1" }} />}
+              mode={soilMoistureMode}
+              onModeChange={setSoilMoistureMode}
+              rawData={soilMoistureRaw}
+              processedData={soilMoistureWeekly}
+              xTicks7={xTicks7}
+              xDomain7={xDomain7}
+              tooltipValueLabel="水分量"
+              yDomainStandard={[
+                (min) => Math.floor(min - 5),
+                (max) => Math.ceil(max + 5),
+              ]}
+              processedLines={[
+                { key: "max", name: "最大値", stroke: "#c18585" },
+                { key: "avg", name: "平均値", stroke: "#92c185" },
+                { key: "min", name: "最小値", stroke: "#85a5c1" },
+              ]}
+            />
           </Box>
 
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* 室内温度7日間推移 */}
-            {/* 1日の最高、最低、平均温度を7日間表示する */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >
-                    <Stack direction="row"  alignItems="center">                  
-                      <ThermostatIcon sx={{ color: '#c18585' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >室内温度の推移</Typography>
-                    </Stack>
-                    {roomTempWeekly.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary">
-                          データがありません
-                        </Typography>
-                      ) : (
-                        <ResponsiveContainer width="100%" height={250}>
-                          <LineChart data={roomTempWeekly}>
-                            <XAxis dataKey="date" />
-                            <YAxis unit="°C" />
-                            <Tooltip />
-                            <Legend />
-                            <Line dataKey="max" name="最高温度" stroke="#c18585" strokeWidth={2} />
-                            <Line dataKey="avg" name="平均温度" stroke="#92c185" strokeWidth={2} />
-                            <Line dataKey="min" name="最低温度" stroke="#85a5c1" strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <DualModeChartCard
+              title="室内温度の推移"
+              icon={<ThermostatIcon sx={{ color: "#c18585" }} />}
+              mode={roomTempMode}
+              onModeChange={setRoomTempMode}
+              rawData={roomTempRaw}
+              processedData={roomTempWeekly}
+              xTicks7={xTicks7}
+              xDomain7={xDomain7}
+              unit="°C"
+              tooltipValueLabel="温度"
+              tooltipUnitSuffix="°C"
+              yDomainStandard={[
+                (min) => Math.floor(min - 1),
+                (max) => Math.ceil(max + 1),
+              ]}
+              processedLines={[
+                { key: "max", name: "最高温度", stroke: "#c18585" },
+                { key: "avg", name: "平均温度", stroke: "#92c185" },
+                { key: "min", name: "最低温度", stroke: "#85a5c1" },
+              ]}
+            />
 
             {/* 室内湿度7日間推移 */}
-            {/* 1日の最高、最低、平均温度を7日間表示する */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >  
-                    <Stack direction="row"  alignItems="center">     
-                      <ThermostatIcon sx={{ color: '#85a5c1' }} /> 
-                      <Typography variant="subtitle1" color="text.primary">室内湿度の推移</Typography>
-                    </Stack> 
-                    {roomHumidWeekly.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary">
-                          データがありません
-                        </Typography>
-                      ) : (
-                        <ResponsiveContainer width="100%" height={250}>
-                          <LineChart data={roomHumidWeekly}>
-                            <XAxis dataKey="date" />
-                            <YAxis unit="%" />
-                            <Tooltip />
-                            <Legend />
-                            <Line dataKey="max" name="最高湿度" stroke="#c18585" strokeWidth={2} />
-                            <Line dataKey="avg" name="平均湿度" stroke="#92c185" strokeWidth={2} />
-                            <Line dataKey="min" name="最低湿度" stroke="#85a5c1" strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <DualModeChartCard
+              title="室内湿度の推移"
+              icon={<ThermostatIcon sx={{ color: "#85a5c1" }} />}
+              mode={roomHumidMode}
+              onModeChange={setRoomHumidMode}
+              rawData={roomHumidRaw}
+              processedData={roomHumidWeekly}
+              xTicks7={xTicks7}
+              xDomain7={xDomain7}
+              unit="%"
+              tooltipValueLabel="湿度"
+              tooltipUnitSuffix="%"
+              yDomainStandard={[
+                (min) => Math.max(0, Math.floor(min - 5)),
+                (max) => Math.min(100, Math.ceil(max + 5)),
+              ]}
+              processedLines={[
+                { key: "max", name: "最高湿度", stroke: "#c18585" },
+                { key: "avg", name: "平均湿度", stroke: "#92c185" },
+                { key: "min", name: "最低湿度", stroke: "#85a5c1" },
+              ]}
+            />
           </Box>
 
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* 日射量7日間推移 */}
-            {/* 1日の最高、最低、平均日射量を7日間表示する */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >   
-                    <Stack direction="row"  alignItems="center">                  
-                      <SunnyIcon sx={{ color: '#c18585' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >日射量の推移</Typography>                    
-                    </Stack>
-                    {lightWeekly.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary">
-                          データがありません
-                        </Typography>
-                      ) : (
-                        <ResponsiveContainer width="100%" height={250}>
-                          <LineChart data={lightWeekly}>
-                            <XAxis dataKey="date" />
-                            <YAxis tick={{ fontSize: 14 }} unit="lux" />
-                            <Tooltip />
-                            <Legend />
-                            <Line dataKey="max" name="最大値" stroke="#c18585" strokeWidth={2} />
-                            <Line dataKey="avg" name="平均値" stroke="#92c185" strokeWidth={2} />
-                            <Line dataKey="min" name="最小値" stroke="#85a5c1" strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <DualModeChartCard
+              title="日射量の推移"
+              icon={<SunnyIcon sx={{ color: "#c18585" }} />}
+              mode={lightMode}
+              onModeChange={setLightMode}
+              rawData={lightRaw}
+              processedData={lightWeekly}
+              xTicks7={xTicks7}
+              xDomain7={xDomain7}
+              unit="lux"
+              tooltipValueLabel="日射量"
+              tooltipUnitSuffix="lux"
+              yDomainStandard={[
+                (min) => Math.max(0, Math.floor(min - 50)),
+                (max) => Math.ceil(max + 50),
+              ]}
+            />
 
             {/* CO2濃度7日間遷移 */}
-            {/* 単純に数値を並べる 波打つようなグラフを想定 */}
-            <Card sx={{width: '500px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >   
-                    <Stack direction="row"  alignItems="center">  
-                      <SpeedIcon sx={{ color: '#85a5c1' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >CO₂濃度の推移</Typography>
-                    </Stack> 
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <ChartCardFrame
+              title="CO₂濃度の推移"
+              icon={<SpeedIcon sx={{ color: "#85a5c1" }} />}
+            >
+              {co2Weekly.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  データがありません
+                </Typography>
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={co2Weekly} margin={{ left: 10 }}>
+                    <XAxis
+                      dataKey="ts"
+                      type="number"
+                      scale="time"
+                      domain={xDomain7} // ← 可能なら統一（7日終端まで）
+                      ticks={xTicks7}
+                      tickFormatter={(ts: number) => dayjs(ts).format("MM/DD")}
+                      interval={0}
+                      tick={{ fontSize: 14 }}
+                    />
+                    <YAxis tick={{ fontSize: 14 }} unit="ppm" />
+                    <Tooltip
+                      labelFormatter={(ts: number) => dayjs(ts).format("MM/DD HH:mm")}
+                    />
+                    <Line dataKey="value" name="CO₂" stroke="#85a5c1" strokeWidth={2} dot={false} />
+                    {/* 日平均線を入れるならここに Line を追加 */}
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </ChartCardFrame>
           </Box>
+
           <Box sx={{p: 2, display: 'flex', gap: 2}}>
             {/* EC遷移 */}
-            {/* ECのみ7日間ではなく全てのデータを表示する */}
-            <Card sx={{width: '700px', borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack spacing={1} sx={{ width: '100%' }}> 
-                  <Stack spacing={0.5} >                     
-                    <Stack direction="row"  alignItems="center"> 
-                      <BoltIcon sx={{ color: '#c0c185' }} /> 
-                      <Typography variant='subtitle1' color='text.primary' >EC値の推移（週次）</Typography>                      
-                    </Stack>
-                    {ecWeekly.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        データがありません
-                      </Typography>
-                    ) : (
-                      <Box sx={{ width: '100%', height: 250}}>
-                        <ResponsiveContainer width="100%" height="100%" >
-                          <LineChart data={ecWeekly} margin={{ top: 20, right: 30, bottom: 20, left: 30 }} >
-                            <XAxis dataKey="date" />
-                            <YAxis tick={{ fontSize: 14 }} unit="μS/cm" />
-                            <Tooltip />
-                            <Legend />
-                            <Line dataKey="ec" name="EC" stroke="#c0c185" strokeWidth={2} dot={false} />
-                            {/* <Line dataKey="tds" name="TDS" stroke="#85a5c1" strokeWidth={2} dot={false} /> */}
-                            {/* <Line dataKey="temperature" name="温度" stroke="#c18585" strokeWidth={2} dot={false} /> */}
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </Box>
-                    )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+            <ChartCardFrame
+              title="EC値の推移（週次）"
+              icon={<BoltIcon sx={{ color: "#c0c185" }} />}
+              width={700}
+            >
+              {ecWeekly.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  データがありません
+                </Typography>
+              ) : (
+                <Box sx={{ width: "100%", height: 250 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={ecWeekly} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                      <XAxis dataKey="date" />
+                      <YAxis tick={{ fontSize: 14 }} unit="μS/cm" />
+                      <Tooltip />
+                      <Legend />
+                      <Line dataKey="ec" name="EC" stroke="#c0c185" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              )}
+            </ChartCardFrame>
           </Box>
 
         </Container>

@@ -144,7 +144,7 @@ export default function PhotoPageContainer() {
           disableGutters
           sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}
         >            
-          <Typography variant='subtitle1' color='text.primary'>栽培開始（12月3日）から本日までの写真記録</Typography>  
+          <Typography variant='subtitle1' color='text.primary'>栽培開始（12月8日）から本日までの写真記録</Typography>  
           <Typography variant='body2' color='text.secondary'>※毎日6時、12時、18時、24時に撮影</Typography> 
 
           {/* TODO: 各グラフにスクロールバーを付ける */}
