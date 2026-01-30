@@ -3,6 +3,7 @@ import { Card, CardContent, Stack, Typography } from "@mui/material";
 import { ResponsiveContainer, LineChart, XAxis, YAxis, Line, Tooltip, Legend, ReferenceArea } from "recharts";
 import dayjs from "dayjs";
 import ViewModeToggle, { type ViewMode } from "./ViewModeToggle";
+import type { AxisDomain } from "recharts/types/util/types";
 
 export type RawPoint = { ts: number; value: number };
 export type WeeklyStatPoint = { date: string; max: number; min: number; avg: number };
@@ -79,9 +80,6 @@ export default function DualModeChartCard({
 }: Props) {
   const isStandard = mode === "standard";
   const empty = isStandard ? rawData.length === 0 : processedData.length === 0;
-  const referenceMin = referenceAreas
-   ? Math.min(...referenceAreas.map(r => r.y1))
-   : Infinity;
 
   const referenceMax = referenceAreas
    ? Math.max(...referenceAreas.map(r => r.y2))
@@ -100,24 +98,28 @@ export default function DualModeChartCard({
   );
 
   const computedDomainStandard: [number, number] = [
-   Math.min(...dataValuesStandard, referenceMin),
+   0,
    Math.max(...dataValuesStandard, referenceMax),
   ];
 
   const computedDomainProcessed: [number, number] = [
-   Math.min(...dataValuesProcessed, referenceMin),
+   0,
    Math.max(...dataValuesProcessed, referenceMax),
   ];
 
   const enableRef = enableReferenceDomain && referenceAreas?.length;
 
-  const yDomainStandardFinal = enableRef
-    ? computedDomainStandard
-    : ['auto', 'auto'];
+  const yDomainStandardFinal: AxisDomain = enableRef
+  ? computedDomainStandard
+  : ([, dataMax]: readonly [number, number]) =>
+      [0, dataMax] as readonly [number, number];
 
-  const yDomainProcessedFinal = enableRef
-    ? computedDomainProcessed
-    : ['auto', 'auto'];
+const yDomainProcessedFinal: AxisDomain = enableRef
+  ? computedDomainProcessed
+  : ([, dataMax]: readonly [number, number]) =>
+      [0, dataMax] as readonly [number, number];
+
+
 
 
   return (
