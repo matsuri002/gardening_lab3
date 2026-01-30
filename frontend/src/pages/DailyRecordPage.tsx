@@ -22,6 +22,7 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  ReferenceArea,
 } from 'recharts';
 import SunnyIcon from '@mui/icons-material/Sunny';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
@@ -357,6 +358,31 @@ export default function DailyRecordPageContainer() {
     }
   };
 
+ // Daily では「その日が何日目か」を見る
+const cultivationStart = dayjs("2025-12-08"); // 本来はDB
+const daysFromStart = selectedDate.diff(cultivationStart, "day");
+const isGermination = daysFromStart < 10;
+
+
+  const komatsunaTempRange = isGermination
+  ? [
+      {
+        y1: 20,
+        y2: 25,
+        label: "発芽適温",
+        fill: "#c18585",
+      },
+    ]
+  : [
+      {
+        y1: 15,
+        y2: 25,
+        label: "生育適温",
+        fill: "#92c185",
+      },
+    ];
+
+
     useEffect(() => {
       if (!selectedDate) return;
       fetchEnvironmentData(selectedDate);
@@ -599,28 +625,35 @@ export default function DailyRecordPageContainer() {
               title="土壌温度の推移"
               icon={<ThermostatIcon sx={{ color: "#c1a185" }} />}
             >
-              {soilTempDaily.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  データがありません
-                </Typography>
-              ) : (
-                <Box sx={{ width: "100%", height: 250 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={soilTempDaily}>
-                      <XAxis dataKey="time" />
-                      <YAxis unit="°C" />
-                      <Tooltip />
-                      <Line
-                        dataKey="value"
-                        name="土壌温度"
-                        strokeWidth={2}
-                        dot={false}
-                        stroke="#c1a185"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </Box>
-              )}
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={soilTempDaily}>
+                  <XAxis dataKey="time" />
+                  <YAxis
+                    unit="°C"
+                    domain={[
+                      0,
+                      Math.max(
+                        ...soilTempDaily.map(d => d.value),
+                        ...komatsunaTempRange.map(r => r.y2)
+                      ),
+                    ]}
+                  />
+
+                  {komatsunaTempRange.map((r, i) => (
+                    <ReferenceArea
+                      key={i}
+                      y1={r.y1}
+                      y2={r.y2}
+                      fill={r.fill}
+                      fillOpacity={0.15}
+                      label={{ value: r.label, position: "insideTopRight", fontSize: 12 }}
+                    />
+                  ))}
+
+                  <Tooltip />
+                  <Line dataKey="value" stroke="#c1a185" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
             </ChartCardFrame>
 
             {/* 土壌水分量推移 */}
@@ -669,25 +702,49 @@ export default function DailyRecordPageContainer() {
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={roomTHDaily}>
                       <XAxis dataKey="time" />
-                      <YAxis yAxisId="left" unit="°C" />
+
+                      <YAxis
+                        yAxisId="left"
+                        unit="°C"
+                        domain={[
+                          0,
+                          Math.max(
+                            ...soilTempDaily.map(d => d.value),
+                            ...komatsunaTempRange.map(r => r.y2)
+                          ),
+                        ]}
+                      />
+
                       <YAxis yAxisId="right" orientation="right" unit="%" />
+
+                      {komatsunaTempRange.map((r, i) => (
+                        <ReferenceArea
+                          key={i}
+                          yAxisId="left"
+                          y1={r.y1}
+                          y2={r.y2}
+                          fill={r.fill}
+                          fillOpacity={0.15}
+                          label={{ value: r.label, position: "insideTopRight", fontSize: 12 }}
+                        />
+                      ))}
                       <Tooltip />
                       <Legend />
                       <Line
                         yAxisId="left"
                         dataKey="temp"
-                        dot={false}
-                        strokeWidth={2}
                         name="室内温度"
                         stroke="#c18585"
+                        strokeWidth={2}
+                        dot={false}
                       />
                       <Line
                         yAxisId="right"
                         dataKey="humid"
-                        dot={false}
-                        strokeWidth={2}
                         name="室内湿度"
                         stroke="#85a5c1"
+                        strokeWidth={2}
+                        dot={false}
                       />
                     </LineChart>
                   </ResponsiveContainer>
