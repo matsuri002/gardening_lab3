@@ -255,7 +255,7 @@ export default function WeeklyRecordPageContainer() {
   const cultivationStart = dayjs("2025-12-08"); // 実際はDBから
 
   const daysFromStart = endDate.diff(cultivationStart, "day");
-  const isGermination = daysFromStart < 10;
+  const isGermination = daysFromStart <= 10;
 
   const komatsunaTempRange = isGermination
     ? [

@@ -4,6 +4,7 @@ import {
   CardContent,
   Stack,
   Avatar,
+  Divider,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -33,6 +34,7 @@ import Header from '../components/Header';
 import BackButton from '../components/BackButton';
 import { useParams } from 'react-router-dom';
 import ChartCardFrame from '../components/ChartCardFrame';
+import React from 'react';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -96,6 +98,51 @@ export default function DailyRecordPageContainer() {
     time: string;
     value: number;
   };
+  
+  type AdviceRule = {
+    from: number;   
+    to: number;     
+    text: string;
+  };
+
+  const KOMATSUNA_ADVICE_RULES: AdviceRule[] = [
+      {
+        from: 0,
+        to: 10,
+        text:
+          "発芽適温は20~25℃です。播種後は2~3日で発芽しますが、低温だとこの2~3倍の発芽日数を要します。土は乾きすぎないように。発芽までは特に水分が重要です。",
+      },
+      {
+        from: 11,
+        to: 15,
+        text:
+          "間引き（1回目）を行ってください。目安：子葉の形が正ハートのものを残し、大きすぎるものや小さいものを優先して間引きましょう。株間2cm程度。",
+      },
+      {
+        from: 16,
+        to: 20,
+        text:
+          "本葉2~3枚になったら最終間引きを行ってください。目安：株間4~5cm。本葉4〜5枚までは5℃以下にしないよう保温すると抽苔（とう立ち）予防になります。",
+      },
+      {
+        from: 21,
+        to: 40,
+        text:
+          "葉が次々と展開し始め、株が目に見えて大きくなります。葉色が濃くなってきたら順調に育っています。灌水は控えめに。本葉3〜4枚以降は過湿にすると軟弱徒長しやすくなります。",
+      },
+      {
+        from: 41,
+        to: 50,
+        text:
+          "葉が増えてボリュームが出る時期です。株が密集している場合、軽い補正間引きで風通しを良くすると病気予防になります。",
+      },
+      {
+        from: 51,
+        to: 9999,
+        text:
+          "葉が7〜9枚、草丈25cm前後になれば収穫適期です。収穫が遅れると葉柄が固くなり、アクが強くなります。収穫は朝がおすすめです。葉の水分が多く、みずみずしさが長持ちします。",
+      },
+    ];
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
@@ -361,7 +408,7 @@ export default function DailyRecordPageContainer() {
  // Daily では「その日が何日目か」を見る
 const cultivationStart = dayjs("2025-12-08"); // 本来はDB
 const daysFromStart = selectedDate.diff(cultivationStart, "day");
-const isGermination = daysFromStart < 10;
+const isGermination = daysFromStart <= 10;
 
 
   const komatsunaTempRange = isGermination
@@ -382,6 +429,22 @@ const isGermination = daysFromStart < 10;
       },
     ];
 
+    const adviceText = React.useMemo(() => {
+      // plantType があるなら、コマツナの時だけ出すなども可能
+      // if (plantType !== "komatsuna") return null;
+      return getKomatsunaAdvice(daysFromStart);
+    }, [daysFromStart /*, plantType*/])
+
+    
+
+    function getKomatsunaAdvice(daysFromStart: number): string | null {
+      if (Number.isNaN(daysFromStart)) return null;
+      if (daysFromStart < 0) return "栽培開始日より前の日付です。";
+      const rule = KOMATSUNA_ADVICE_RULES.find(
+        (r) => daysFromStart >= r.from && daysFromStart <= r.to
+      );
+      return rule?.text ?? null;
+    }
 
     useEffect(() => {
       if (!selectedDate) return;
@@ -470,152 +533,191 @@ const isGermination = daysFromStart < 10;
             </Typography>            
           {/* 土壌温度、土壌水分量、室内温湿度、日射量表示 */}
           {/* TODO: 当日の場合は最新のデータを表示、前日以前の場合は閲覧時の時刻のデータを表示 */}
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
-            {/* 土壌湿度 */}
-            <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar sx={{ bgcolor: '#c1a185' }} variant='rounded' >
-                    <ThermostatIcon />
-                  </Avatar>
-                  <Stack spacing={0.5}>  
-                    <Typography variant='subtitle1' color='text.primary'>
-                      土壌温度
-                    </Typography>
-                    <Typography variant='h6' fontWeight={600}>
-                      {envData.soilTemp !== null ? `${envData.soilTemp} ` : '--'}°C
-                    </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      30分毎更新
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+          <Box sx={{p: 2, display: 'flex', gap: 2, alignItems: 'stretch' }}>
+            <Box>
+              <Box sx={{p: 2, display: 'flex', gap: 2}}>
+                {/* 土壌湿度 */}
+                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                  <CardContent>
+                    <Stack direction='row' spacing={2} alignItems='center'>                
+                      <Avatar sx={{ bgcolor: '#c1a185' }} variant='rounded' >
+                        <ThermostatIcon />
+                      </Avatar>
+                      <Stack spacing={0.5}>  
+                        <Typography variant='subtitle1' color='text.primary'>
+                          土壌温度
+                        </Typography>
+                        <Typography variant='h6' fontWeight={600}>
+                          {envData.soilTemp !== null ? `${envData.soilTemp} ` : '--'}°C
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          30分毎更新
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
 
-            {/* 土壌水分量 */}
-            {/* 水やりの時間（6,18時）には印をつける */}
-            <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar sx={{ bgcolor: '#85a5c1' }} variant='rounded' >
-                    <WaterDropIcon />
-                  </Avatar>
-                  <Stack spacing={0.5}>  
-                    <Typography variant='subtitle1' color='text.primary'>
-                      土壌水分量
-                    </Typography>
-                    <Typography variant='h6' fontWeight={600}>
-                       {envData.soilMoisture !== null ? `${envData.soilMoisture} ` : '--'}
-                    </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      30分毎更新
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>  
+                {/* 土壌水分量 */}
+                {/* 水やりの時間（6,18時）には印をつける */}
+                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                  <CardContent>
+                    <Stack direction='row' spacing={2} alignItems='center'>                
+                      <Avatar sx={{ bgcolor: '#85a5c1' }} variant='rounded' >
+                        <WaterDropIcon />
+                      </Avatar>
+                      <Stack spacing={0.5}>  
+                        <Typography variant='subtitle1' color='text.primary'>
+                          土壌水分量
+                        </Typography>
+                        <Typography variant='h6' fontWeight={600}>
+                          {envData.soilMoisture !== null ? `${envData.soilMoisture} ` : '--'}
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          30分毎更新
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>  
 
-            {/* 室内温湿度 */}
-            <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar sx={{ bgcolor: '#A395A3' }} variant='rounded' >
-                    <ThermostatIcon />
-                  </Avatar>
-                  <Stack spacing={0.5}>  
-                    <Typography variant='subtitle1' color='text.primary'>
-                      室内温湿度
-                    </Typography>
-                    <Box sx={{display: 'flex', gap: 2}}>
-                      <Typography variant='h6' fontWeight={600}>
-                        温度 : {envData.roomTemp ?? '--'} °C
-                      </Typography>
-                      <Typography variant='h6' fontWeight={600}>
-                        湿度 : {envData.roomHumid ?? '--'} %
-                      </Typography>
-                    </Box>
-                    <Typography variant='body2' color='text.secondary'>
-                      30分毎更新
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>   
+                {/* 室内温湿度 */}
+                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                  <CardContent>
+                    <Stack direction='row' spacing={2} alignItems='center'>                
+                      <Avatar sx={{ bgcolor: '#A395A3' }} variant='rounded' >
+                        <ThermostatIcon />
+                      </Avatar>
+                      <Stack spacing={0.5}>  
+                        <Typography variant='subtitle1' color='text.primary'>
+                          室内温湿度
+                        </Typography>
+                        <Box sx={{display: 'flex', gap: 2}}>
+                          <Typography variant='h6' fontWeight={600}>
+                            温度 : {envData.roomTemp ?? '--'} °C
+                          </Typography>
+                          <Typography variant='h6' fontWeight={600}>
+                            湿度 : {envData.roomHumid ?? '--'} %
+                          </Typography>
+                        </Box>
+                        <Typography variant='body2' color='text.secondary'>
+                          30分毎更新
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>   
+              </Box>
 
-            {/* 日射量 */}
-            <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar sx={{ bgcolor: '#c18585' }} variant='rounded' >
-                    <SunnyIcon />
-                  </Avatar>
-                  <Stack spacing={0.5}>  
-                    <Typography variant='subtitle1' color='text.primary'>
-                      日射量
-                    </Typography>
-                    <Typography variant='h6' fontWeight={600}>
-                      {envData.light !== null ? `${envData.light} ` : '--'}lux
-                    </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      30分毎更新
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>    
-          </Box>
+              {/* CO2濃度、EC値表示 */}
+              <Box sx={{p: 2, display: 'flex', gap: 2}}>
+                {/* 日射量 */}
+                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                  <CardContent>
+                    <Stack direction='row' spacing={2} alignItems='center'>                
+                      <Avatar sx={{ bgcolor: '#c18585' }} variant='rounded' >
+                        <SunnyIcon />
+                      </Avatar>
+                      <Stack spacing={0.5}>  
+                        <Typography variant='subtitle1' color='text.primary'>
+                          日射量
+                        </Typography>
+                        <Typography variant='h6' fontWeight={600}>
+                          {envData.light !== null ? `${envData.light} ` : '--'}lux
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          30分毎更新
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>    
+                {/* CO₂濃度 */}
+                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                  <CardContent>
+                    <Stack direction='row' spacing={2} alignItems='center'>                
+                      <Avatar sx={{ bgcolor: '#85a5c1' }} variant='rounded' >
+                        <SpeedIcon />
+                      </Avatar>
+                      <Stack spacing={0.5}>  
+                        <Typography variant='subtitle1' color='text.primary'>
+                          CO₂濃度
+                        </Typography>
+                        <Typography variant="h6" fontWeight={600}>
+                          {latestCo2 ? `${latestCo2.value} ppm` : "--"}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {latestCo2
+                            ? `6時間毎測定 - ${latestCo2.time} 時点`
+                            : "データなし"}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
 
-          {/* CO2濃度、EC値表示 */}
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
-            {/* CO₂濃度 */}
-            <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar sx={{ bgcolor: '#85a5c1' }} variant='rounded' >
-                    <SpeedIcon />
-                  </Avatar>
-                  <Stack spacing={0.5}>  
-                    <Typography variant='subtitle1' color='text.primary'>
-                      CO₂濃度
-                    </Typography>
-                    <Typography variant="h6" fontWeight={600}>
-                      {latestCo2 ? `${latestCo2.value} ppm` : "--"}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {latestCo2
-                        ? `6時間毎測定 - ${latestCo2.time} 時点`
-                        : "データなし"}
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+                {/* EC値 */}
+                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                  <CardContent>
+                    <Stack direction='row' spacing={2} alignItems='center'>                
+                      <Avatar sx={{ bgcolor: '#c0c185' }} variant='rounded' >
+                        <BoltIcon />
+                      </Avatar>
 
-            {/* EC値 */}
-            <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
-              <CardContent>
-                <Stack direction='row' spacing={2} alignItems='center'>                
-                  <Avatar sx={{ bgcolor: '#c0c185' }} variant='rounded' >
-                    <BoltIcon />
-                  </Avatar>
+                      <Stack spacing={0.5}>  
+                        <Typography variant='subtitle1' color='text.primary'>
+                          EC値（電気伝導率）
+                        </Typography>
+                        <Typography variant="h6" fontWeight={600}>
+                          {ecData ? `${ecData.ec} μS/cm` : "--"}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {ecData
+                            ? `週1回測定 - 測定 : ${dayjs(ecData.measuredAt).format("YYYY/MM/DD")}`
+                            : "データなし"}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Box>
+            </Box>
 
-                  <Stack spacing={0.5}>  
-                    <Typography variant='subtitle1' color='text.primary'>
-                      EC値（電気伝導率）
+            <Box sx={{pt: 2, pb:4, width: 500, display: "flex" }}>
+              <Card
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: 3,
+                  boxShadow: 3,
+                  p: 1,
+                  bgcolor: "background.paper",
+                  ":hover": { boxShadow: 6 },
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    今日のアドバイス
+                  </Typography>
+
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    栽培{daysFromStart}日目（開始日：{cultivationStart.format("YYYY/MM/DD")}）
+                  </Typography>
+
+                  <Divider sx={{ my: 1.5 }} />
+
+                  {adviceText ? (
+                    <Typography sx={{ whiteSpace: "pre-line", lineHeight: 1.8 }}>
+                      {adviceText}
                     </Typography>
-                    <Typography variant="h6" fontWeight={600}>
-                      {ecData ? `${ecData.ec} μS/cm` : "--"}
+                  ) : (
+                    <Typography color="text.secondary">
+                      この日のアドバイスはありません。
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {ecData
-                        ? `週1回測定 - 測定 : ${dayjs(ecData.measuredAt).format("YYYY/MM/DD")}`
-                        : "データなし"}
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </Box>
           </Box>
 
           {/* 土壌温度、土壌水分量の日内推移 */}
