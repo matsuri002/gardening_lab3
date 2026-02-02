@@ -1,8 +1,9 @@
 import React from "react";
 import { Card, CardContent, Stack, Typography } from "@mui/material";
-import { ResponsiveContainer, LineChart, XAxis, YAxis, Line, Tooltip, Legend } from "recharts";
+import { ResponsiveContainer, LineChart, XAxis, YAxis, Line, Tooltip, Legend, ReferenceArea } from "recharts";
 import dayjs from "dayjs";
 import ViewModeToggle, { type ViewMode } from "./ViewModeToggle";
+import type { AxisDomain } from "recharts/types/util/types";
 
 export type RawPoint = { ts: number; value: number };
 export type WeeklyStatPoint = { date: string; max: number; min: number; avg: number };
@@ -44,6 +45,15 @@ type Props = {
   /** Style */
   cardSx?: any;
   chartMargin?: { top?: number; right?: number; bottom?: number; left?: number };
+
+  referenceAreas?: {
+    y1: number;
+    y2: number;
+    label: string;
+    fill: string;
+  }[];
+
+  enableReferenceDomain?: boolean;
 };
 
 const defaultProcessedLines: ProcessedLineConfig[] = [
@@ -62,14 +72,55 @@ export default function DualModeChartCard({
   xTicks7,
   xDomain7,
   unit,
-  yDomainStandard,
-  yDomainProcessed,
   processedLines = defaultProcessedLines,
   cardSx,
   chartMargin = { right: 20, left: 20 },
+  referenceAreas,
+  enableReferenceDomain
 }: Props) {
   const isStandard = mode === "standard";
   const empty = isStandard ? rawData.length === 0 : processedData.length === 0;
+
+  const referenceMax = referenceAreas
+   ? Math.max(...referenceAreas.map(r => r.y2))
+   : -Infinity;
+
+  // standard（時系列）
+  const dataValuesStandard = rawData
+   .map(d => Number(d.value))
+   .filter(v => !isNaN(v));
+
+  // processed（集計）
+  const dataValuesProcessed = processedData.flatMap(d =>
+    processedLines
+     .map(l => Number(d[l.key]))
+     .filter(v => !isNaN(v))
+  );
+
+  const computedDomainStandard: [number, number] = [
+   0,
+   Math.max(...dataValuesStandard, referenceMax),
+  ];
+
+  const computedDomainProcessed: [number, number] = [
+   0,
+   Math.max(...dataValuesProcessed, referenceMax),
+  ];
+
+  const enableRef = enableReferenceDomain && referenceAreas?.length;
+
+  const yDomainStandardFinal: AxisDomain = enableRef
+  ? computedDomainStandard
+  : ([, dataMax]: readonly [number, number]) =>
+      [0, dataMax] as readonly [number, number];
+
+const yDomainProcessedFinal: AxisDomain = enableRef
+  ? computedDomainProcessed
+  : ([, dataMax]: readonly [number, number]) =>
+      [0, dataMax] as readonly [number, number];
+
+
+
 
   return (
     <Card sx={{ width: "700px", borderRadius: 3, boxShadow: 3, p: 1, ...cardSx }}>
@@ -106,13 +157,19 @@ export default function DualModeChartCard({
                 />
                 <YAxis
                   unit={unit}
-                  domain={
-                    yDomainStandard ?? [
-                      (min: number) => min,
-                      (max: number) => max,
-                    ]
-                  }
+                  domain={isStandard ? yDomainStandardFinal : yDomainProcessedFinal}
                 />
+
+                {referenceAreas?.map((r, i) => (
+                    <ReferenceArea
+                    key={i}
+                    y1={r.y1}
+                    y2={r.y2}
+                    fill={r.fill}
+                    fillOpacity={0.15}
+                    label={{ value: r.label, position: "insideTopRight", fontSize: 12 }}
+                    />
+                ))}
                 {/* 重要：ticks を固定しても全点で出したい場合は trigger="item" が安定 */}
                 <Tooltip
                   labelFormatter={(ts: number) => dayjs(ts).format("MM/DD HH:mm")}
@@ -126,13 +183,19 @@ export default function DualModeChartCard({
                 <XAxis dataKey="date" />
                 <YAxis
                   unit={unit}
-                  domain={
-                    yDomainProcessed ?? [
-                      (min: number) => min,
-                      (max: number) => max,
-                    ]
-                  }
+                  domain={isStandard ? yDomainStandardFinal : yDomainProcessedFinal}
                 />
+
+                {referenceAreas?.map((r, i) => (
+                    <ReferenceArea
+                        key={i}
+                        y1={r.y1}
+                        y2={r.y2}
+                        fill={r.fill}
+                        fillOpacity={0.15}
+                        label={{ value: r.label, position: "insideTopRight", fontSize: 12 }}
+                    />
+                ))}
                 <Tooltip />
                 <Legend />
                 {processedLines.map((l) => (

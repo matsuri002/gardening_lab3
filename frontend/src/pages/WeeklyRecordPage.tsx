@@ -252,6 +252,29 @@ export default function WeeklyRecordPageContainer() {
     }
   };
 
+  const cultivationStart = dayjs("2025-12-08"); // 実際はDBから
+
+  const daysFromStart = endDate.diff(cultivationStart, "day");
+  const isGermination = daysFromStart <= 10;
+
+  const komatsunaTempRange = isGermination
+    ? [
+        {
+          y1: 20,
+          y2: 25,
+          label: "発芽適温",
+          fill: "#c18585",
+        },
+      ]
+    : [
+        {
+          y1: 15,
+          y2: 25,
+          label: "生育適温",
+          fill: "#92c185",
+        },
+      ];
+
   useEffect(() => {
     if (!endDate) return;
     if (soilTempMode === 'standard') {
@@ -353,6 +376,8 @@ export default function WeeklyRecordPageContainer() {
                 { key: "avg", name: "平均温度", stroke: "#92c185" },
                 { key: "min", name: "最低温度", stroke: "#85a5c1" },
               ]}
+              referenceAreas={komatsunaTempRange}
+              enableReferenceDomain
             />
 
             {/* 土壌水分量7日間推移 */}
@@ -376,6 +401,7 @@ export default function WeeklyRecordPageContainer() {
                 { key: "avg", name: "平均値", stroke: "#92c185" },
                 { key: "min", name: "最小値", stroke: "#85a5c1" },
               ]}
+              enableReferenceDomain={false}
             />
           </Box>
 
@@ -402,6 +428,8 @@ export default function WeeklyRecordPageContainer() {
                 { key: "avg", name: "平均温度", stroke: "#92c185" },
                 { key: "min", name: "最低温度", stroke: "#85a5c1" },
               ]}
+              referenceAreas={komatsunaTempRange}
+              enableReferenceDomain
             />
 
             {/* 室内湿度7日間推移 */}
@@ -426,6 +454,7 @@ export default function WeeklyRecordPageContainer() {
                 { key: "avg", name: "平均湿度", stroke: "#92c185" },
                 { key: "min", name: "最低湿度", stroke: "#85a5c1" },
               ]}
+              enableReferenceDomain={false}
             />
           </Box>
 
@@ -447,6 +476,7 @@ export default function WeeklyRecordPageContainer() {
                 (min) => Math.max(0, Math.floor(min - 50)),
                 (max) => Math.ceil(max + 50),
               ]}
+               enableReferenceDomain={false}
             />
 
             {/* CO2濃度7日間遷移 */}
