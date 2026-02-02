@@ -12,14 +12,7 @@ const ONEDRIVE_ROOT = process.env.ONEDRIVE_ROOT;
 if (!ONEDRIVE_ROOT) {
   throw new Error("ONEDRIVE_ROOT is not defined");
 }
-
-const rawDataDir = path.join(
-  ONEDRIVE_ROOT,
-  "gardening_lab",
-  "komatsuna",
-  "komatsuna_A",
-  "raw_data"
-);
+const ONEDRIVE_ROOT_PATH: string = ONEDRIVE_ROOT;
 
 // supabaseのplantsテーブルから指定した植物名に対応するidを1件取得する
 async function getPlantId(plantName: string): Promise<string> {
@@ -75,42 +68,59 @@ async function readCsvAndCountRows(csvFilePath: string): Promise<number> {
 
 // 列挙と判定
 async function main() {
-  const plantName = "komatsuna_A";
+  const targets = ["komatsuna_A", "komatsuna_B", "komatsuna_C"];
 
-  const plantId = await getPlantId(plantName);
-  console.log("plant_id =", plantId);
+  for (const plantName of targets) {
+    console.log(`=== start: ${plantName} ===`);
 
-  const files = fs
-    .readdirSync(rawDataDir)
-    .filter((file) => file.endsWith(".csv"));
+    const plantId = await getPlantId(plantName);
+    console.log("plant_id =", plantId);
 
-  for (const file of files) {
-    const csvDate = extractDateFromCsv(file);
-
-    const fullCsvPath = path.join(rawDataDir, file);
-
-    // csvが読めるか確認
-    const rowCount = await readCsvAndCountRows(fullCsvPath);
-    console.log(`${file} 行数=${rowCount}`);
-
-    const rows = await readCsvRows(fullCsvPath);
-    console.log(`${file} 行数=${rows.length}`);
-
-    await insertEnvironmentMeasurements(plantId, rows);
-
-    // DB に UPSERT
-    await upsertDailyEnvironment(
-      plantId,
-      csvDate,
-      path.join(
-        "gardening_lab",
-        "komatsuna",
-        "komatsuna_A",
-        "raw_data",
-        file
-      )
+    const rawDataDir = path.join(
+      ONEDRIVE_ROOT_PATH,
+      "gardening_lab",
+      "komatsuna",
+      plantName,
+      "raw_data"
     );
 
+    if (!fs.existsSync(rawDataDir)) {
+      console.warn(`raw_data が存在しません: ${rawDataDir}`);
+      continue;
+    }
+
+    const files = fs
+      .readdirSync(rawDataDir)
+      .filter((file) => file.endsWith(".csv"));
+
+    for (const file of files) {
+      const csvDate = extractDateFromCsv(file);
+
+      const fullCsvPath = path.join(rawDataDir, file);
+
+      // csvが読めるか確認
+      const rowCount = await readCsvAndCountRows(fullCsvPath);
+      console.log(`${plantName} ${file} 行数=${rowCount}`);
+
+      const rows = await readCsvRows(fullCsvPath);      
+
+      await insertEnvironmentMeasurements(plantId, rows);
+
+      // DB に UPSERT
+      await upsertDailyEnvironment(
+        plantId,
+        csvDate,
+        path.join(
+          "gardening_lab",
+          "komatsuna",
+          plantName,
+          "raw_data",
+          file
+        )
+      );
+    }
+
+    console.log(`=== end: ${plantName} ===`);
   }
 }
 
