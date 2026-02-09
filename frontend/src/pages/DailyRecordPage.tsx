@@ -75,6 +75,8 @@ export default function DailyRecordPageContainer() {
     plantType: string;
   }>();
 
+  const { plantName } = useParams<{ plantName: string }>();
+
  type EcRow = {
     ec: number;
     tds: number;
@@ -155,6 +157,7 @@ export default function DailyRecordPageContainer() {
   const [ecData, setEcData] = useState<EcData | null>(null);
   const [co2Daily, setCo2Daily] = useState<Co2DataPoint[]>([]);
   const [latestCo2, setLatestCo2] = useState<Co2DataPoint | null>(null);
+  const [plantId, setPlantId] = useState<string | null>(null);
   
 
   const fetchEnvironmentData = async (
@@ -164,6 +167,7 @@ export default function DailyRecordPageContainer() {
       // JSTとしてそのまま扱う
       const base = selectedDate.format('YYYY-MM-DD');
       const isToday = selectedDate.isSame(dayjs(), 'day');
+      if (!plantId) return;
 
       let query = supabase 
         .from('environment_measurements')
@@ -175,7 +179,7 @@ export default function DailyRecordPageContainer() {
           room_humid,
           light
         `)
-        .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+        .eq('plant_id', plantId!)
 
       if (isToday) {
         query = query
@@ -233,6 +237,23 @@ export default function DailyRecordPageContainer() {
     }
   };
 
+  const fetchPlantId = async () => {
+    if (!plantName) return;
+
+    const { data, error } = await supabase
+      .from("plants")
+      .select("id")
+      .eq("plant_name", plantName)
+      .single();
+
+    if (error || !data) {
+      console.error("plant_id取得失敗:", error);
+      return;
+    }
+
+    setPlantId(data.id);
+  };
+
   const fetchDailySensorData = async (
     selectedDate: dayjs.Dayjs,
     column: 'soil_temp' | 'soil_moisture' | 'room_temp' | 'room_humid' | 'light',
@@ -241,10 +262,12 @@ export default function DailyRecordPageContainer() {
     try {
       const base = selectedDate.format('YYYY-MM-DD');
 
+      if (!plantId) return;
+
       const { data, error } = await supabase
         .from('environment_measurements')
         .select(`measured_at, ${column}`)
-        .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+        .eq('plant_id',plantId!)
         .gte('measured_at', `${base} 00:00:00`)
         .lte('measured_at', `${base} 23:59:59`)
         .order('measured_at', { ascending: true }) as {
@@ -278,13 +301,14 @@ export default function DailyRecordPageContainer() {
     values.reduce((a, b) => a + b, 0) / values.length;
 
   const fetchEcRowsByDate = async (date: string) => {
+    if (!plantId) return [];
     const start = `${date} 00:00:00`;
     const end = `${date} 23:59:59`;
 
     const { data } = await supabase
       .from("ec_measurements")
       .select("ec, tds, temperature, measured_at")
-      .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+      .eq("plant_id", plantId!)
       .gte("measured_at", start)
       .lte("measured_at", end);
 
@@ -292,6 +316,7 @@ export default function DailyRecordPageContainer() {
   };
 
   const fetchEcDataBySelectedDate = async (selectedDate: string) => {
+    if (!plantId) return;
     // 選択日のデータを試す
     let rows = await fetchEcRowsByDate(selectedDate);
 
@@ -300,7 +325,7 @@ export default function DailyRecordPageContainer() {
       const { data } = await supabase
         .from("ec_measurements")
         .select("measured_at")
-        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .eq("plant_id", plantId!)
         .lt("measured_at", `${selectedDate} 00:00:00`)
         .order("measured_at", { ascending: false })
         .limit(1);
@@ -331,13 +356,14 @@ export default function DailyRecordPageContainer() {
   };
 
   const fetchLatestCo2Data = async (selectedDate: dayjs.Dayjs) => {
+    if (!plantId) return;
     const base = selectedDate.format("YYYY-MM-DD");
     const isToday = selectedDate.isSame(dayjs(), "day");
 
     let query = supabase
       .from("co2_measurements")
       .select("measured_at, co2")
-      .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945");
+      .eq("plant_id", plantId!);
 
     if (isToday) {
       // 今日 → 最新1件
@@ -375,11 +401,12 @@ export default function DailyRecordPageContainer() {
   const fetchDailyCo2Data = async (selectedDate: dayjs.Dayjs) => {
     try {
       const base = selectedDate.format("YYYY-MM-DD");
+      if (!plantId) return;
 
       const { data, error } = await supabase
         .from("co2_measurements")
         .select("measured_at, co2")
-        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .eq("plant_id", plantId!)
         .gte("measured_at", `${base} 00:00:00`)
         .lte("measured_at", `${base} 23:59:59`)
         .order("measured_at", { ascending: true });
@@ -447,7 +474,11 @@ const isGermination = daysFromStart <= 10;
     }
 
     useEffect(() => {
-      if (!selectedDate) return;
+      fetchPlantId();
+    }, [plantName]);
+
+    useEffect(() => {
+      if (!plantId) return;
       fetchEnvironmentData(selectedDate);
       fetchDailySensorData(selectedDate, 'soil_temp', setSoilTempDaily);
       fetchDailySensorData(selectedDate, 'soil_moisture', setSoilMoistureDaily);
@@ -459,7 +490,7 @@ const isGermination = daysFromStart <= 10;
       );
       fetchLatestCo2Data(selectedDate);
       fetchDailyCo2Data(selectedDate);
-    }, [selectedDate]);
+    }, [selectedDate, plantId]);
 
   // 同じ時刻の温度と湿度を1レコードにまとめる
   const roomTHDaily = roomTempDaily.map((tempRow) => {

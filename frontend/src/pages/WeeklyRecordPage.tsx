@@ -48,6 +48,8 @@ export default function WeeklyRecordPageContainer() {
   const { plantType } = useParams<{
     plantType: string;
   }>();
+  const { plantName } = useParams<{ plantName: string }>();
+
 
   const [endDate, setEndDate] = useState<dayjs.Dayjs>(dayjs());
   const [soilTempWeekly, setSoilTempWeekly] = useState<WeeklyStatPoint[]>([]);
@@ -57,6 +59,24 @@ export default function WeeklyRecordPageContainer() {
   const [lightWeekly, setLightWeekly] = useState<WeeklyStatPoint[]>([]);
   const [ecWeekly, setEcWeekly] = useState<EcWeeklyPoint[]>([]);
   const [co2Weekly, setCo2Weekly] = useState<Co2WeeklyPoint[]>([]);
+  const [plantId, setPlantId] = useState<string | null>(null);
+
+  const fetchPlantId = async () => {
+    if (!plantName) return;
+
+    const { data, error } = await supabase
+      .from("plants")
+      .select("id")
+      .eq("plant_name", plantName)
+      .single();
+
+    if (error || !data) {
+      console.error("plant_id取得失敗:", error);
+      return;
+    }
+
+    setPlantId(data.id);
+  };
 
   const fetchWeeklyStats = async (
     endDate: dayjs.Dayjs,
@@ -67,13 +87,14 @@ export default function WeeklyRecordPageContainer() {
       | 'soil_moisture'
       | 'light'
   ): Promise<WeeklyStatPoint[]> => {
+    if (!plantId) return [];
     const end = endDate.endOf('day');
     const start = end.subtract(6, 'day').startOf('day');
 
     const { data, error } = await supabase
       .from('environment_measurements')
       .select(`measured_at, ${column}`)
-      .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+      .eq('plant_id', plantId!)
       .gte('measured_at', start.format('YYYY-MM-DD HH:mm:ss'))
       .lte('measured_at', end.format('YYYY-MM-DD HH:mm:ss'));
 
@@ -116,11 +137,12 @@ export default function WeeklyRecordPageContainer() {
   ): Promise<RawPoint[]> => {
     const end = endDate.endOf('day');
     const start = end.subtract(6, 'day').startOf('day');
+    if (!plantId) return [];
 
     const { data, error } = await supabase
       .from('environment_measurements')
       .select(`measured_at, ${column}`)
-      .eq('plant_id', 'd5961b2c-fd83-4ccf-a3da-709e9aca6945')
+      .eq('plant_id', plantId!)
       .gte('measured_at', start.format('YYYY-MM-DD HH:mm:ss'))
       .lte('measured_at', end.format('YYYY-MM-DD HH:mm:ss'))
       .order('measured_at', { ascending: true });
@@ -164,11 +186,12 @@ export default function WeeklyRecordPageContainer() {
 
   const fetchEcWeeklyData = async () => {
     try {
+      if (!plantId) return;
       // plant_id を指定して全期間の EC データを取得
       const { data, error } = await supabase
         .from("ec_measurements")
         .select(`ec, tds, temperature, measured_at`)
-        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .eq("plant_id", plantId!)
         .order("measured_at", { ascending: true });
 
       if (error || !data) {
@@ -219,11 +242,12 @@ export default function WeeklyRecordPageContainer() {
     try {
       const end = endDate.endOf("day");
       const start = end.subtract(6, "day").startOf("day");
+      if (!plantId) return;
 
       const { data, error } = await supabase
         .from("co2_measurements")
         .select("measured_at, co2")
-        .eq("plant_id", "d5961b2c-fd83-4ccf-a3da-709e9aca6945")
+        .eq("plant_id", plantId!)
         .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
         .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"))
         .order("measured_at", { ascending: true });
@@ -276,6 +300,10 @@ export default function WeeklyRecordPageContainer() {
       ];
 
   useEffect(() => {
+    fetchPlantId();
+  }, [plantName]);
+
+  useEffect(() => {
     if (!endDate) return;
     if (soilTempMode === 'standard') {
       fetchWeeklyRawData(endDate, 'soil_temp').then(setSoilTempRaw);
@@ -305,7 +333,7 @@ export default function WeeklyRecordPageContainer() {
     fetchEcWeeklyData();
     fetchWeeklyCo2Data(endDate);
 
-  }, [endDate, soilTempMode, soilMoistureMode, roomTempMode, roomHumidMode, lightMode]);
+  }, [plantId, endDate, soilTempMode, soilMoistureMode, roomTempMode, roomHumidMode, lightMode]);
 
   return (
     <Box 
