@@ -18,4 +18,18 @@ feat(ci): add .gitlab-ci.yml for automated lint and build checks
 **修正内容:**
 - プロジェクトルートに `.gitlab-ci.yml` を作成。
 - Node.js 20 イメージを使用し、Frontend/Backend それぞれの Lint、フォーマットチェック（Prettier）、およびビルドの自動実行を定義。
-- マージリクエスト時の品質担保のための基盤を構築。
+
+### コミット2: GitHub Actions への移行
+**推奨コミットメッセージ:**
+```text
+feat(ci): switch from GitLab CI to GitHub Actions
+
+- Remove .gitlab-ci.yml
+- Create .github/workflows/ci.yml
+- Migrate lint and build checks to GitHub Actions
+- Configure npm caching for faster execution
+```
+
+**修正内容:**
+- リポジトリが GitHub であることが判明したため、`.gitlab-ci.yml` を削除。
+- GitHub Actions 用のワークフロー定義 `.github/workflows/ci.yml` を作成し、同等の品質チェックを移植。
