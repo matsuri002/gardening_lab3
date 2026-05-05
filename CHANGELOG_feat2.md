@@ -46,3 +46,16 @@ fix(frontend): adjust eslint-disable location in WeeklyRecordPage.tsx
 **修正内容:**
 - CI パイプラインで検出された `WeeklyRecordPage.tsx` の Lint エラーを修正。
 - `eslint-disable` の位置を正しく調整し、未使用の無効化コメントを削除。
+
+### コミット4: Backend のビルドエラー修正（型安全性の強化）
+**推奨コミットメッセージ:**
+```text
+fix(backend): fix 'Object is possibly undefined' errors in test files
+
+- Safely access array elements using intermediate variables
+- Ensure compatibility with noUncheckedIndexedAccess in tsconfig
+```
+
+**修正内容:**
+- CI パイプラインのビルドジョブ（tsc）で検出された型エラーを修正。
+- `testScanCo2Data.ts` および `testScanEcData.ts` において、配列のインデックスアクセスに対する `undefined` チェックを厳格化。

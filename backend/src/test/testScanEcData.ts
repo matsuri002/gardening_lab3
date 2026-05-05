@@ -105,13 +105,14 @@ async function main() {
     const rows = await readCsvRows(fullCsvPath);
     console.log(`${file} 行数=${rows.length}`);
 
-    if (rows.length > 0) {
+    const firstRow = rows[0];
+    if (firstRow) {
       console.log("insert sample =", {
         plant_id: plantId,
-        measured_at: parseMeasuredAt(rows[0].time),
-        ec: rows[0].A_EC,
-        tds: rows[0].A_TDS,
-        temperature: rows[0].A_Tem,
+        measured_at: parseMeasuredAt(firstRow.time),
+        ec: firstRow.A_EC,
+        tds: firstRow.A_TDS,
+        temperature: firstRow.A_Tem,
       });
     }
 
