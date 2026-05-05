@@ -25,13 +25,16 @@ export default function PhotoPageContainer() {
     plantType: string;
   }>();
 
+  const { plantName } = useParams<{ plantName: string }>();
+
   const [latestPhoto, setLatestPhoto] = useState<PhotoRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [plantId, setPlantId] = useState<string | null>(null);
 
-  const plantId = 'd5961b2c-fd83-4ccf-a3da-709e9aca6945';
+  // const plantId = 'd5961b2c-fd83-4ccf-a3da-709e9aca6945';
 
   const handlePrev = () => {
       setCurrentIndex((prev) => {
@@ -58,6 +61,28 @@ export default function PhotoPageContainer() {
     };
 
   useEffect(() => {
+    const fetchPlantId = async () => {
+      if (!plantName) return;
+
+      const { data, error } = await supabase
+        .from("plants")
+        .select("id")
+        .eq("plant_name", plantName)
+        .single();
+
+      if (error || !data) {
+        console.error("plant_id取得失敗:", error);
+        return;
+      }
+
+      setPlantId(data.id);
+    };
+
+    fetchPlantId();
+  }, [plantName]);
+
+  useEffect(() => {
+    if (!plantId) return;
     const fetchLatestPhoto = async () => {
       setLoading(true);
 
@@ -92,7 +117,7 @@ export default function PhotoPageContainer() {
     };   
 
     fetchLatestPhoto();
-  }, []);
+  }, [plantId]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -111,7 +136,7 @@ export default function PhotoPageContainer() {
         setLatestPhoto(photos[next]);
         return next;
       });
-    }, 300); // ← 再生速度
+    }, 90); // ← 再生速度
 
     return () => clearInterval(interval);
   }, [isPlaying, photos]);
