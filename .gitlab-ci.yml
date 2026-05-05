@@ -1,0 +1,62 @@
+stages:
+  - check
+  - build
+
+default:
+  image: node:20
+  cache:
+    key:
+      files:
+        - frontend/package-lock.json
+        - backend/package-lock.json
+    paths:
+      - frontend/node_modules/
+      - backend/node_modules/
+
+# -----------------------------------------------------------------------------
+# Check Stage: Lint & Format
+# -----------------------------------------------------------------------------
+lint:frontend:
+  stage: check
+  script:
+    - cd frontend
+    - npm ci
+    - npm run lint
+
+lint:backend:
+  stage: check
+  script:
+    - cd backend
+    - npm ci
+    - npm run lint
+
+format:check:
+  stage: check
+  script:
+    - npm install -g prettier
+    - prettier --check .
+
+# -----------------------------------------------------------------------------
+# Build Stage: Production Build Check
+# -----------------------------------------------------------------------------
+build:frontend:
+  stage: build
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/
+    expire_in: 1 week
+
+build:backend:
+  stage: build
+  script:
+    - cd backend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - backend/dist/
+    expire_in: 1 week
