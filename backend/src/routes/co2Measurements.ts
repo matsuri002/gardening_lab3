@@ -15,15 +15,13 @@ router.get("/", (req, res) => {
     measurements: [
       {
         measuredAt: "2025-12-09T06:00:00+09:00",
-        sourceCsvPath:
-          "/komatsuna_A/manual_data/co2_data/co2_2025-12.csv"
+        sourceCsvPath: "/komatsuna_A/manual_data/co2_data/co2_2025-12.csv",
       },
       {
         measuredAt: "2025-12-09T12:00:00+09:00",
-        sourceCsvPath:
-          "/komatsuna_A/manual_data/co2_data/co2_2025-12.csv"
-      }
-    ]
+        sourceCsvPath: "/komatsuna_A/manual_data/co2_data/co2_2025-12.csv",
+      },
+    ],
   });
 });
 

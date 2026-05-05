@@ -12,7 +12,10 @@ export default function App() {
         <Route path="/" element={<TopPageContainer />} />
         <Route path="/select-planter/:plantType" element={<SelectPlanterPageContainer />} />
         <Route path="/plants/:plantType/:plantName/daily" element={<DailyRecordPageContainer />} />
-        <Route path="/plants/:plantType/:plantName/weekly" element={<WeeklyRecordPageContainer />} />
+        <Route
+          path="/plants/:plantType/:plantName/weekly"
+          element={<WeeklyRecordPageContainer />}
+        />
         <Route path="/plants/:plantType/:plantName/photo" element={<PhotoPageContainer />} />
       </Routes>
     </BrowserRouter>

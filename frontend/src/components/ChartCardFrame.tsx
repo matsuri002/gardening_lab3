@@ -4,18 +4,12 @@ import { Card, CardContent, Stack, Typography } from "@mui/material";
 type Props = {
   title: string;
   icon: React.ReactNode;
-  action?: React.ReactNode;     // 右上（トグルなど）
-  children: React.ReactNode;    // 中身は自由
-  width?: number | string;      // Card幅
+  action?: React.ReactNode; // 右上（トグルなど）
+  children: React.ReactNode; // 中身は自由
+  width?: number | string; // Card幅
 };
 
-export default function ChartCardFrame({
-  title,
-  icon,
-  action,
-  children,
-  width = 700,
-}: Props) {
+export default function ChartCardFrame({ title, icon, action, children, width = 700 }: Props) {
   return (
     <Card sx={{ width, borderRadius: 3, boxShadow: 3, p: 1 }}>
       <CardContent>

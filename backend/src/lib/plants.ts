@@ -13,4 +13,3 @@ export async function getPlantIdByName(plantName: string): Promise<string> {
 
   return data.id;
 }
-

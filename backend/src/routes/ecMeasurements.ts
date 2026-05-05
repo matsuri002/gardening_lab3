@@ -15,10 +15,9 @@ router.get("/", (req, res) => {
     measurements: [
       {
         measuredDate: "2025-12-01",
-        sourceCsvPath:
-          "/komatsuna_A/manual_data/ec_data/ec_2025-12.csv"
-      }
-    ]
+        sourceCsvPath: "/komatsuna_A/manual_data/ec_data/ec_2025-12.csv",
+      },
+    ],
   });
 });
 

@@ -14,21 +14,21 @@ router.get("/", (_req, res) => {
         id: "dummy-uuid-a",
         year: 2025,
         plant_type: "komatsuna",
-        plant_name: "komatsuna_A"
+        plant_name: "komatsuna_A",
       },
       {
         id: "dummy-uuid-b",
         year: 2025,
         plant_type: "komatsuna",
-        plant_name: "komatsuna_B"
+        plant_name: "komatsuna_B",
       },
       {
         id: "dummy-uuid-c",
         year: 2025,
         plant_type: "komatsuna",
-        plant_name: "komatsuna_C"
-      }
-    ]
+        plant_name: "komatsuna_C",
+      },
+    ],
   });
 });
 

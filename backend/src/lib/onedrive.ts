@@ -5,7 +5,5 @@ export function listCsvFiles(path: string): string[] {
     encoding: "utf-8",
   });
 
-  return result
-    .split("\n")
-    .filter((file) => file.endsWith(".csv"));
+  return result.split("\n").filter((file) => file.endsWith(".csv"));
 }

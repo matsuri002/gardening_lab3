@@ -7,7 +7,6 @@ import { extractDateFromCsv } from "../lib/parseCsvFilename.js";
 import { readCsvRows } from "../lib/readCsv.js";
 import { insertEnvironmentMeasurements } from "../lib/insertEnvironmentMeasurements.js";
 
-
 const ONEDRIVE_ROOT = process.env.ONEDRIVE_ROOT;
 if (!ONEDRIVE_ROOT) {
   throw new Error("ONEDRIVE_ROOT is not defined");
@@ -30,19 +29,17 @@ async function getPlantId(plantName: string): Promise<string> {
 }
 
 // supabaseのdaily_environmentテーブルに1日の環境データをUPSERTする
-async function upsertDailyEnvironment(
-  plantId: string,
-  date: string,
-  sourceCsvPath: string
-) {
-  const { error } = await supabase.from("daily_environment").upsert({
-    plant_id: plantId,
-    date,
-    source_csv_path: sourceCsvPath,
-  },
-  {
-    onConflict: "plant_id,date",   
-  });
+async function upsertDailyEnvironment(plantId: string, date: string, sourceCsvPath: string) {
+  const { error } = await supabase.from("daily_environment").upsert(
+    {
+      plant_id: plantId,
+      date,
+      source_csv_path: sourceCsvPath,
+    },
+    {
+      onConflict: "plant_id,date",
+    },
+  );
 
   if (error) {
     throw error;
@@ -81,7 +78,7 @@ async function main() {
       "gardening_lab",
       "komatsuna",
       plantName,
-      "raw_data"
+      "raw_data",
     );
 
     if (!fs.existsSync(rawDataDir)) {
@@ -89,9 +86,7 @@ async function main() {
       continue;
     }
 
-    const files = fs
-      .readdirSync(rawDataDir)
-      .filter((file) => file.endsWith(".csv"));
+    const files = fs.readdirSync(rawDataDir).filter((file) => file.endsWith(".csv"));
 
     for (const file of files) {
       const csvDate = extractDateFromCsv(file);
@@ -102,7 +97,7 @@ async function main() {
       const rowCount = await readCsvAndCountRows(fullCsvPath);
       console.log(`${plantName} ${file} 行数=${rowCount}`);
 
-      const rows = await readCsvRows(fullCsvPath);      
+      const rows = await readCsvRows(fullCsvPath);
 
       await insertEnvironmentMeasurements(plantId, rows);
 
@@ -110,13 +105,7 @@ async function main() {
       await upsertDailyEnvironment(
         plantId,
         csvDate,
-        path.join(
-          "gardening_lab",
-          "komatsuna",
-          plantName,
-          "raw_data",
-          file
-        )
+        path.join("gardening_lab", "komatsuna", plantName, "raw_data", file),
       );
     }
 

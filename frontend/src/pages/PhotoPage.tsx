@@ -1,16 +1,11 @@
-import {
-  Typography, Box, Container, Button,
-  Card,
-  CardContent,
-  Stack,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import dayjs from 'dayjs';
-import RecordTabs from '../components/Tab';
-import Header from '../components/Header';
-import BackButton from '../components/BackButton';
-import { useParams } from 'react-router-dom';
+import { Typography, Box, Container, Button, Card, CardContent, Stack } from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import dayjs from "dayjs";
+import RecordTabs from "../components/Tab";
+import Header from "../components/Header";
+import BackButton from "../components/BackButton";
+import { useParams } from "react-router-dom";
 
 type PhotoRecord = {
   id: string;
@@ -20,7 +15,6 @@ type PhotoRecord = {
 };
 
 export default function PhotoPageContainer() {
-
   const { plantType } = useParams<{
     plantType: string;
   }>();
@@ -37,87 +31,87 @@ export default function PhotoPageContainer() {
   // const plantId = 'd5961b2c-fd83-4ccf-a3da-709e9aca6945';
 
   const handlePrev = () => {
-      setCurrentIndex((prev) => {
-        const nextIndex = Math.max(prev - 1, 0);
-        setLatestPhoto(photos[nextIndex]);
-        return nextIndex;
-      });
-    };
+    setCurrentIndex((prev) => {
+      const nextIndex = Math.max(prev - 1, 0);
+      setLatestPhoto(photos[nextIndex]);
+      return nextIndex;
+    });
+  };
 
-    const handleNext = () => {
-      setCurrentIndex((prev) => {
-        const nextIndex = Math.min(prev + 1, photos.length - 1);
-        setLatestPhoto(photos[nextIndex]);
-        return nextIndex;
-      });
-    };
+  const handleNext = () => {
+    setCurrentIndex((prev) => {
+      const nextIndex = Math.min(prev + 1, photos.length - 1);
+      setLatestPhoto(photos[nextIndex]);
+      return nextIndex;
+    });
+  };
 
-    const handlePlay = () => {
-      if (photos.length === 0) return;
+  const handlePlay = () => {
+    if (photos.length === 0) return;
 
-      setCurrentIndex(0);
-      setLatestPhoto(photos[0]);
-      setIsPlaying(true);
-    };
+    setCurrentIndex(0);
+    setLatestPhoto(photos[0]);
+    setIsPlaying(true);
+  };
 
-  useEffect(() => {
-    const fetchPlantId = async () => {
-      if (!plantName) return;
+  const fetchPlantId = useCallback(async () => {
+    if (!plantName) return;
 
-      const { data, error } = await supabase
-        .from("plants")
-        .select("id")
-        .eq("plant_name", plantName)
-        .single();
+    const { data, error } = await supabase
+      .from("plants")
+      .select("id")
+      .eq("plant_name", plantName)
+      .single();
 
-      if (error || !data) {
-        console.error("plant_id取得失敗:", error);
-        return;
-      }
+    if (error || !data) {
+      console.error("plant_id取得失敗:", error);
+      return;
+    }
 
-      setPlantId(data.id);
-    };
-
-    fetchPlantId();
+    setPlantId(data.id);
   }, [plantName]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPlantId();
+  }, [fetchPlantId]);
+
+  const fetchLatestPhoto = useCallback(async () => {
     if (!plantId) return;
-    const fetchLatestPhoto = async () => {
-      setLoading(true);
+    setLoading(true);
 
-      const { data, error } = await supabase
-        .from('photos')
-        .select('id, taken_at, storage_path')
-        .eq('plant_id', plantId)
-        .order('taken_at', { ascending: true })
+    const { data, error } = await supabase
+      .from("photos")
+      .select("id, taken_at, storage_path")
+      .eq("plant_id", plantId)
+      .order("taken_at", { ascending: true });
 
-      if (error || !data) {
-        console.error('最新写真取得失敗', error);
-        setLatestPhoto(null);
-        setLoading(false);
-        return;
-      }
-
-      const photoList: PhotoRecord[] = data.map((photo) => {
-      const { data: urlData } = supabase.storage
-          .from('photos')
-          .getPublicUrl(photo.storage_path);
-
-        return {
-          ...photo,
-          photo_url: urlData.publicUrl,
-        };
-      });
-
-      setPhotos(photoList);
-      setCurrentIndex(photoList.length - 1);           // 最新1枚
-      setLatestPhoto(photoList[photoList.length - 1]); // 既存ロジック維持
+    if (error || !data) {
+      console.error("最新写真取得失敗", error);
+      setLatestPhoto(null);
       setLoading(false);
-    };   
+      return;
+    }
 
-    fetchLatestPhoto();
+    const photoList: PhotoRecord[] = data.map((photo) => {
+      const { data: urlData } = supabase.storage.from("photos").getPublicUrl(photo.storage_path);
+
+      return {
+        ...photo,
+        photo_url: urlData.publicUrl,
+      };
+    });
+
+    setPhotos(photoList);
+    setCurrentIndex(photoList.length - 1); // 最新1枚
+    setLatestPhoto(photoList[photoList.length - 1]); // 既存ロジック維持
+    setLoading(false);
   }, [plantId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchLatestPhoto();
+  }, [fetchLatestPhoto]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -142,13 +136,13 @@ export default function PhotoPageContainer() {
   }, [isPlaying, photos]);
 
   return (
-    <Box 
+    <Box
       sx={{
-        position: 'fixed',
-        inset: 0,           
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.default',
+        position: "fixed",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
       }}
     >
       {/* ヘッダー */}
@@ -157,38 +151,41 @@ export default function PhotoPageContainer() {
       {/* タブ - 写真を選択 */}
       <Stack direction="row" spacing={15} alignItems="center">
         <RecordTabs />
-        {plantType && (
-          <BackButton to={`/select-planter/${plantType}`} />
-        )}
+        {plantType && <BackButton to={`/select-planter/${plantType}`} />}
       </Stack>
 
       {/* メイン */}
-      <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', }}>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}
+      >
         <Container
           maxWidth={false}
           disableGutters
           sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}
-        >            
-          <Typography variant='subtitle1' color='text.primary'>栽培開始（12月8日）から本日までの写真記録</Typography>  
-          <Typography variant='body2' color='text.secondary'>※毎日6時、12時、18時、24時に撮影</Typography> 
+        >
+          <Typography variant="subtitle1" color="text.primary">
+            栽培開始（12月8日）から本日までの写真記録
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            ※毎日6時、12時、18時、24時に撮影
+          </Typography>
 
           {/* TODO: 各グラフにスクロールバーを付ける */}
-          <Box sx={{p: 2, display: 'flex', gap: 2, }}>
+          <Box sx={{ p: 2, display: "flex", gap: 2 }}>
             {/* TODO: 再生・停止ボタンを設置 */}
             {/* TODO: 時間バーを設置 */}
-            <Card sx={{ width: '800px'}}>
+            <Card sx={{ width: "800px" }}>
               <CardContent>
                 {loading ? (
                   <Typography>読み込み中...</Typography>
                 ) : !latestPhoto ? (
-                  <Typography color="text.secondary">
-                    写真がありません
-                  </Typography>
+                  <Typography color="text.secondary">写真がありません</Typography>
                 ) : (
                   <Stack spacing={2}>
                     <Typography variant="subtitle1">
-                      {dayjs(latestPhoto.taken_at.replace('+00', '')).format(
-                        'YYYY年MM月DD日 HH:mm'
+                      {dayjs(latestPhoto.taken_at.replace("+00", "")).format(
+                        "YYYY年MM月DD日 HH:mm",
                       )}
                     </Typography>
 
@@ -197,22 +194,18 @@ export default function PhotoPageContainer() {
                       src={latestPhoto.photo_url}
                       alt="plant photo"
                       sx={{
-                        width: '100%',
+                        width: "100%",
                         maxHeight: 450,
-                        objectFit: 'contain',
+                        objectFit: "contain",
                         borderRadius: 2,
-                        margin: '0 auto',
+                        margin: "0 auto",
                       }}
                     />
                   </Stack>
                 )}
               </CardContent>
-              <Stack direction="row" spacing={2} justifyContent="center" sx={{pb: '3px'}}>
-                <Button
-                  onClick={handlePrev}
-                  disabled={currentIndex <= 0}
-                  sx={{ color:"#85a5c1"}}
-                >
+              <Stack direction="row" spacing={2} justifyContent="center" sx={{ pb: "3px" }}>
+                <Button onClick={handlePrev} disabled={currentIndex <= 0} sx={{ color: "#85a5c1" }}>
                   ◀
                 </Button>
                 <Typography>
@@ -221,17 +214,17 @@ export default function PhotoPageContainer() {
                 <Button
                   onClick={handleNext}
                   disabled={currentIndex >= photos.length - 1}
-                  sx={{ color:"#85a5c1"}}
+                  sx={{ color: "#85a5c1" }}
                 >
                   ▶
                 </Button>
               </Stack>
-              <Stack direction="row" spacing={2}  justifyContent="center" sx={{pb: '3px'}} >
+              <Stack direction="row" spacing={2} justifyContent="center" sx={{ pb: "3px" }}>
                 <Button
                   variant="contained"
                   onClick={handlePlay}
                   disabled={isPlaying || loading}
-                  sx={{ bgcolor:"#85a5c1"}}
+                  sx={{ bgcolor: "#85a5c1" }}
                 >
                   ▶ 再生
                 </Button>
@@ -240,11 +233,11 @@ export default function PhotoPageContainer() {
                   variant="outlined"
                   onClick={() => setIsPlaying(false)}
                   disabled={!isPlaying}
-                  sx={{ color:"#85a5c1"}}
+                  sx={{ color: "#85a5c1" }}
                 >
                   ⏸ 停止
                 </Button>
-            </Stack>
+              </Stack>
             </Card>
           </Box>
         </Container>
@@ -252,4 +245,3 @@ export default function PhotoPageContainer() {
     </Box>
   );
 }
-

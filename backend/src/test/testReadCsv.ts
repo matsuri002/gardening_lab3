@@ -14,7 +14,7 @@ const csvFilePath = path.join(
   "komatsuna",
   "komatsuna_A",
   "raw_data",
-  "komatsuna_A_2025-12-08.csv"
+  "komatsuna_A_2025-12-08.csv",
 );
 
 console.log("CSV PATH =", csvFilePath);
