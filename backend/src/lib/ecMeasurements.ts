@@ -13,16 +13,12 @@ export type EcMeasurementInsert = {
  * EC測定データをUPSERTする
  * plant_id + measured_at で重複防止
  */
-export async function upsertEcMeasurements(
-  records: EcMeasurementInsert[]
-) {
+export async function upsertEcMeasurements(records: EcMeasurementInsert[]) {
   if (records.length === 0) return;
 
-  const { error } = await supabase
-    .from("ec_measurements")
-    .upsert(records, {
-      onConflict: "plant_id,measured_at",
-    });
+  const { error } = await supabase.from("ec_measurements").upsert(records, {
+    onConflict: "plant_id,measured_at",
+  });
 
   if (error) {
     throw error;

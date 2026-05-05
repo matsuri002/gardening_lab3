@@ -1,28 +1,27 @@
-import { Typography, Box, Container, Stack } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import ThermostatIcon from '@mui/icons-material/Thermostat'
-import SunnyIcon from '@mui/icons-material/Sunny';
-import WaterDropIcon from '@mui/icons-material/WaterDrop';
-import BoltIcon from '@mui/icons-material/Bolt';
-import SpeedIcon from '@mui/icons-material/Speed';
-import dayjs from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } from 'recharts';
-import RecordTabs from '../components/Tab';
-import Header from '../components/Header';
-import BackButton from '../components/BackButton';
-import { useParams } from 'react-router-dom';
-import DualModeChartCard from '../components/DualModeChartCard';
-import ChartCardFrame from '../components/ChartCardFrame';
+import { Typography, Box, Container, Stack } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import ThermostatIcon from "@mui/icons-material/Thermostat";
+import SunnyIcon from "@mui/icons-material/Sunny";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import BoltIcon from "@mui/icons-material/Bolt";
+import SpeedIcon from "@mui/icons-material/Speed";
+import dayjs from "dayjs";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } from "recharts";
+import RecordTabs from "../components/Tab";
+import Header from "../components/Header";
+import BackButton from "../components/BackButton";
+import { useParams } from "react-router-dom";
+import DualModeChartCard from "../components/DualModeChartCard";
+import ChartCardFrame from "../components/ChartCardFrame";
 
 export default function WeeklyRecordPageContainer() {
-
   type WeeklyStatPoint = {
     date: string;
-    max: number;    
+    max: number;
     min: number;
     avg: number;
   };
@@ -35,8 +34,8 @@ export default function WeeklyRecordPageContainer() {
   };
 
   type Co2WeeklyPoint = {
-    ts: number;          // 追加: UNIX ms
-    datetime: string;    // 表示用の整形文字列（Tooltipで使ってもOK）
+    ts: number; // 追加: UNIX ms
+    datetime: string; // 表示用の整形文字列（Tooltipで使ってもOK）
     value: number;
   };
 
@@ -44,12 +43,11 @@ export default function WeeklyRecordPageContainer() {
     ts: number;
     value: number;
   };
-  
+
   const { plantType } = useParams<{
     plantType: string;
   }>();
   const { plantName } = useParams<{ plantName: string }>();
-
 
   const [endDate, setEndDate] = useState<dayjs.Dayjs>(dayjs());
   const [soilTempWeekly, setSoilTempWeekly] = useState<WeeklyStatPoint[]>([]);
@@ -61,7 +59,7 @@ export default function WeeklyRecordPageContainer() {
   const [co2Weekly, setCo2Weekly] = useState<Co2WeeklyPoint[]>([]);
   const [plantId, setPlantId] = useState<string | null>(null);
 
-  const fetchPlantId = async () => {
+  const fetchPlantId = useCallback(async () => {
     if (!plantName) return;
 
     const { data, error } = await supabase
@@ -76,37 +74,33 @@ export default function WeeklyRecordPageContainer() {
     }
 
     setPlantId(data.id);
-  };
+  }, [plantName]);
 
-  const fetchWeeklyStats = async (
-    endDate: dayjs.Dayjs,
-    column:
-      | 'soil_temp'
-      | 'room_temp'
-      | 'room_humid'
-      | 'soil_moisture'
-      | 'light'
-  ): Promise<WeeklyStatPoint[]> => {
+  const fetchWeeklyStats = useCallback(
+    async (
+      endDate: dayjs.Dayjs,
+      column: "soil_temp" | "room_temp" | "room_humid" | "soil_moisture" | "light",
+    ): Promise<WeeklyStatPoint[]> => {
     if (!plantId) return [];
-    const end = endDate.endOf('day');
-    const start = end.subtract(6, 'day').startOf('day');
+    const end = endDate.endOf("day");
+    const start = end.subtract(6, "day").startOf("day");
 
     const { data, error } = await supabase
-      .from('environment_measurements')
+      .from("environment_measurements")
       .select(`measured_at, ${column}`)
-      .eq('plant_id', plantId!)
-      .gte('measured_at', start.format('YYYY-MM-DD HH:mm:ss'))
-      .lte('measured_at', end.format('YYYY-MM-DD HH:mm:ss'));
+      .eq("plant_id", plantId!)
+      .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
+      .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"));
 
     if (error || !data) return [];
 
     // 日付ごとにまとめる
     const grouped: Record<string, number[]> = {};
 
-    data.forEach((row: any) => {
+    data.forEach((row: { measured_at: string; [key: string]: unknown }) => {
       if (row[column] == null) return;
 
-      const date = dayjs(row.measured_at.replace('+00', '')).format('MM/DD');
+      const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
       if (!grouped[date]) grouped[date] = [];
       grouped[date].push(Number(row[column]));
     });
@@ -114,8 +108,7 @@ export default function WeeklyRecordPageContainer() {
     return Object.entries(grouped).map(([date, values]) => {
       const max = Math.max(...values);
       const min = Math.min(...values);
-      const avg =
-        values.reduce((a, b) => a + b, 0) / values.length;
+      const avg = values.reduce((a, b) => a + b, 0) / values.length;
 
       return {
         date,
@@ -124,46 +117,42 @@ export default function WeeklyRecordPageContainer() {
         min: Number(min.toFixed(1)),
       };
     });
-  };
+  }, [plantId]);
 
-  const fetchWeeklyRawData = async (
-    endDate: dayjs.Dayjs,
-    column:
-      | 'soil_temp'
-      | 'room_temp'
-      | 'room_humid'
-      | 'soil_moisture'
-      | 'light'
-  ): Promise<RawPoint[]> => {
-    const end = endDate.endOf('day');
-    const start = end.subtract(6, 'day').startOf('day');
+  const fetchWeeklyRawData = useCallback(
+    async (
+      endDate: dayjs.Dayjs,
+      column: "soil_temp" | "room_temp" | "room_humid" | "soil_moisture" | "light",
+    ): Promise<RawPoint[]> => {
+    const end = endDate.endOf("day");
+    const start = end.subtract(6, "day").startOf("day");
     if (!plantId) return [];
 
     const { data, error } = await supabase
-      .from('environment_measurements')
+      .from("environment_measurements")
       .select(`measured_at, ${column}`)
-      .eq('plant_id', plantId!)
-      .gte('measured_at', start.format('YYYY-MM-DD HH:mm:ss'))
-      .lte('measured_at', end.format('YYYY-MM-DD HH:mm:ss'))
-      .order('measured_at', { ascending: true });
+      .eq("plant_id", plantId!)
+      .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
+      .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"))
+      .order("measured_at", { ascending: true });
 
     if (error || !data) return [];
 
     return data
-      .filter((row: any) => row[column] != null)
-      .map((row: any) => {
-        const m = dayjs(row.measured_at.replace('+00', ''));
+      .filter((row: { [key: string]: unknown }) => row[column] != null)
+      .map((row: { measured_at: string; [key: string]: unknown }) => {
+        const m = dayjs((row.measured_at as string).replace("+00", ""));
         return { ts: m.valueOf(), value: Number(row[column]) };
       });
-  };
+  }, [plantId]);
 
-  type ViewMode = 'standard' | 'processed';
+  type ViewMode = "standard" | "processed";
 
-  const [soilTempMode, setSoilTempMode] = useState<ViewMode>('standard');
-  const [soilMoistureMode, setSoilMoistureMode] = useState<ViewMode>('standard');
-  const [roomTempMode, setRoomTempMode] = useState<ViewMode>('standard');
-  const [roomHumidMode, setRoomHumidMode] = useState<ViewMode>('standard');
-  const [lightMode, setLightMode] = useState<ViewMode>('processed');
+  const [soilTempMode, setSoilTempMode] = useState<ViewMode>("standard");
+  const [soilMoistureMode, setSoilMoistureMode] = useState<ViewMode>("standard");
+  const [roomTempMode, setRoomTempMode] = useState<ViewMode>("standard");
+  const [roomHumidMode, setRoomHumidMode] = useState<ViewMode>("standard");
+  const [lightMode, setLightMode] = useState<ViewMode>("processed");
 
   // 生データ state（時系列表示用）
   const [soilTempRaw, setSoilTempRaw] = useState<RawPoint[]>([]);
@@ -173,18 +162,18 @@ export default function WeeklyRecordPageContainer() {
   const [lightRaw, setLightRaw] = useState<RawPoint[]>([]);
 
   const xTicks7 = useMemo(() => {
-    const end = endDate.startOf('day'); // 最終日の 00:00
-    const start = end.subtract(6, 'day'); // 6日前の 00:00
-    return Array.from({ length: 7 }, (_, i) => start.add(i, 'day').valueOf());
+    const end = endDate.startOf("day"); // 最終日の 00:00
+    const start = end.subtract(6, "day"); // 6日前の 00:00
+    return Array.from({ length: 7 }, (_, i) => start.add(i, "day").valueOf());
   }, [endDate]);
-  
+
   const xDomain7: [number, number] = useMemo(() => {
     // 7日目の終わりまで表示（最終日の 23:59:59.999）
     const end = xTicks7[6] + 24 * 60 * 60 * 1000 - 1;
     return [xTicks7[0], end];
   }, [xTicks7]);
 
-  const fetchEcWeeklyData = async () => {
+  const fetchEcWeeklyData = useCallback(async () => {
     try {
       if (!plantId) return;
       // plant_id を指定して全期間の EC データを取得
@@ -203,7 +192,7 @@ export default function WeeklyRecordPageContainer() {
       // 日付ごとにグループ化して平均を計算
       const grouped: Record<string, EcWeeklyPoint[]> = {};
 
-      data.forEach((row: any) => {
+      data.forEach((row: { ec: number | null; tds: number | null; temperature: number | null; measured_at: string }) => {
         if (row.ec == null) return;
 
         const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
@@ -231,14 +220,13 @@ export default function WeeklyRecordPageContainer() {
       });
 
       setEcWeekly(averaged);
-
     } catch (err) {
       console.error("ECデータ取得失敗:", err);
       setEcWeekly([]);
     }
-  };
+  }, [plantId]);
 
-  const fetchWeeklyCo2Data = async (endDate: dayjs.Dayjs) => {
+  const fetchWeeklyCo2Data = useCallback(async (endDate: dayjs.Dayjs) => {
     try {
       const end = endDate.endOf("day");
       const start = end.subtract(6, "day").startOf("day");
@@ -263,8 +251,8 @@ export default function WeeklyRecordPageContainer() {
           // ※ measured_at がUTCならタイムゾーン注意。今は既存の replace を踏襲
           const m = dayjs(row.measured_at.replace("+00", ""));
           return {
-            ts: m.valueOf(),                          // ← X軸の実値として使う
-            datetime: m.format("YYYY/MM/DD HH:mm"),   // ← Tooltip 表示用
+            ts: m.valueOf(), // ← X軸の実値として使う
+            datetime: m.format("YYYY/MM/DD HH:mm"), // ← Tooltip 表示用
             value: Number(row.co2),
           };
         });
@@ -274,7 +262,7 @@ export default function WeeklyRecordPageContainer() {
       console.error("CO₂週次データ取得失敗:", err);
       setCo2Weekly([]);
     }
-  };
+  }, [plantId]);
 
   const cultivationStart = dayjs("2025-12-08"); // 実際はDBから
 
@@ -300,49 +288,62 @@ export default function WeeklyRecordPageContainer() {
       ];
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPlantId();
-  }, [plantName]);
+  }, [fetchPlantId]);
 
   useEffect(() => {
-    if (!endDate) return;
-    if (soilTempMode === 'standard') {
-      fetchWeeklyRawData(endDate, 'soil_temp').then(setSoilTempRaw);
+    if (!endDate || !plantId) return;
+    if (soilTempMode === "standard") {
+      fetchWeeklyRawData(endDate, "soil_temp").then(setSoilTempRaw);
     } else {
-      fetchWeeklyStats(endDate, 'soil_temp').then(setSoilTempWeekly);
+      fetchWeeklyStats(endDate, "soil_temp").then(setSoilTempWeekly);
     }
-    if (soilMoistureMode === 'standard') {
-      fetchWeeklyRawData(endDate, 'soil_moisture').then(setSoilMoistureRaw);
+    if (soilMoistureMode === "standard") {
+      fetchWeeklyRawData(endDate, "soil_moisture").then(setSoilMoistureRaw);
     } else {
-      fetchWeeklyStats(endDate, 'soil_moisture').then(setSoilMoistureWeekly);
+      fetchWeeklyStats(endDate, "soil_moisture").then(setSoilMoistureWeekly);
     }
-    if (roomTempMode === 'standard') {
-      fetchWeeklyRawData(endDate, 'room_temp').then(setRoomTempRaw);
+    if (roomTempMode === "standard") {
+      fetchWeeklyRawData(endDate, "room_temp").then(setRoomTempRaw);
     } else {
-      fetchWeeklyStats(endDate, 'room_temp').then(setRoomTempWeekly);
+      fetchWeeklyStats(endDate, "room_temp").then(setRoomTempWeekly);
     }
-    if (roomHumidMode === 'standard') {
-      fetchWeeklyRawData(endDate, 'room_humid').then(setRoomHumidRaw);
+    if (roomHumidMode === "standard") {
+      fetchWeeklyRawData(endDate, "room_humid").then(setRoomHumidRaw);
     } else {
-      fetchWeeklyStats(endDate, 'room_humid').then(setRoomHumidWeekly);
+      fetchWeeklyStats(endDate, "room_humid").then(setRoomHumidWeekly);
     }
-    if (lightMode === 'standard') {
-      fetchWeeklyRawData(endDate, 'light').then(setLightRaw);
+    if (lightMode === "standard") {
+      fetchWeeklyRawData(endDate, "light").then(setLightRaw);
     } else {
-      fetchWeeklyStats(endDate, 'light').then(setLightWeekly);
+      fetchWeeklyStats(endDate, "light").then(setLightWeekly);
     }
     fetchEcWeeklyData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchWeeklyCo2Data(endDate);
-
-  }, [plantId, endDate, soilTempMode, soilMoistureMode, roomTempMode, roomHumidMode, lightMode]);
+  }, [
+    plantId,
+    endDate,
+    soilTempMode,
+    soilMoistureMode,
+    roomTempMode,
+    roomHumidMode,
+    lightMode,
+    fetchWeeklyRawData,
+    fetchWeeklyStats,
+    fetchEcWeeklyData,
+    fetchWeeklyCo2Data,
+  ]);
 
   return (
-    <Box 
+    <Box
       sx={{
-        position: 'fixed',
-        inset: 0,           
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.default',
+        position: "fixed",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
       }}
     >
       {/* ヘッダー */}
@@ -351,20 +352,21 @@ export default function WeeklyRecordPageContainer() {
       {/* タブ - 1週間の記録を選択 */}
       <Stack direction="row" spacing={15} alignItems="center">
         <RecordTabs />
-        {plantType && (
-          <BackButton to={`/select-planter/${plantType}`} />
-        )}
+        {plantType && <BackButton to={`/select-planter/${plantType}`} />}
       </Stack>
 
       {/* メイン */}
-      <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', }}>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}
+      >
         <Container
           maxWidth={false}
           disableGutters
           sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}
-        >          
-          {/* 日付選択 */}    
-          {/* TODO: デフォルトで今日の日付から7日前までのデータを表示 */}      
+        >
+          {/* 日付選択 */}
+          {/* TODO: デフォルトで今日の日付から7日前までのデータを表示 */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             {/* 日付を選択し、選択した日付から7日前までのデータを表示する */}
             <DatePicker
@@ -375,13 +377,14 @@ export default function WeeklyRecordPageContainer() {
               }}
             />
           </LocalizationProvider>
-          <Typography variant='subtitle1' color='text.primary'>過去7日間の推移</Typography>  
+          <Typography variant="subtitle1" color="text.primary">
+            過去7日間の推移
+          </Typography>
           <Typography variant="body2" color="text.secondary">
-            {endDate.subtract(6, 'day').format('MM/DD')}～
-            {endDate.format('MM/DD')}
+            {endDate.subtract(6, "day").format("MM/DD")}～{endDate.format("MM/DD")}
           </Typography>
 
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+          <Box sx={{ p: 2, display: "flex", gap: 2 }}>
             {/* 土壌温度7日間推移 */}
             <DualModeChartCard
               title="土壌温度の推移"
@@ -395,10 +398,7 @@ export default function WeeklyRecordPageContainer() {
               unit="°C"
               tooltipValueLabel="温度"
               tooltipUnitSuffix="°C"
-              yDomainStandard={[
-                (min) => Math.floor(min - 1),
-                (max) => Math.ceil(max + 1),
-              ]}
+              yDomainStandard={[(min) => Math.floor(min - 1), (max) => Math.ceil(max + 1)]}
               processedLines={[
                 { key: "max", name: "最高温度", stroke: "#c18585" },
                 { key: "avg", name: "平均温度", stroke: "#92c185" },
@@ -420,10 +420,7 @@ export default function WeeklyRecordPageContainer() {
               xTicks7={xTicks7}
               xDomain7={xDomain7}
               tooltipValueLabel="水分量"
-              yDomainStandard={[
-                (min) => Math.floor(min - 5),
-                (max) => Math.ceil(max + 5),
-              ]}
+              yDomainStandard={[(min) => Math.floor(min - 5), (max) => Math.ceil(max + 5)]}
               processedLines={[
                 { key: "max", name: "最大値", stroke: "#c18585" },
                 { key: "avg", name: "平均値", stroke: "#92c185" },
@@ -433,7 +430,7 @@ export default function WeeklyRecordPageContainer() {
             />
           </Box>
 
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+          <Box sx={{ p: 2, display: "flex", gap: 2 }}>
             {/* 室内温度7日間推移 */}
             <DualModeChartCard
               title="室内温度の推移"
@@ -447,10 +444,7 @@ export default function WeeklyRecordPageContainer() {
               unit="°C"
               tooltipValueLabel="温度"
               tooltipUnitSuffix="°C"
-              yDomainStandard={[
-                (min) => Math.floor(min - 1),
-                (max) => Math.ceil(max + 1),
-              ]}
+              yDomainStandard={[(min) => Math.floor(min - 1), (max) => Math.ceil(max + 1)]}
               processedLines={[
                 { key: "max", name: "最高温度", stroke: "#c18585" },
                 { key: "avg", name: "平均温度", stroke: "#92c185" },
@@ -486,7 +480,7 @@ export default function WeeklyRecordPageContainer() {
             />
           </Box>
 
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+          <Box sx={{ p: 2, display: "flex", gap: 2 }}>
             {/* 日射量7日間推移 */}
             <DualModeChartCard
               title="日射量の推移"
@@ -504,14 +498,11 @@ export default function WeeklyRecordPageContainer() {
                 (min) => Math.max(0, Math.floor(min - 50)),
                 (max) => Math.ceil(max + 50),
               ]}
-               enableReferenceDomain={false}
+              enableReferenceDomain={false}
             />
 
             {/* CO2濃度7日間遷移 */}
-            <ChartCardFrame
-              title="CO₂濃度の推移"
-              icon={<SpeedIcon sx={{ color: "#85a5c1" }} />}
-            >
+            <ChartCardFrame title="CO₂濃度の推移" icon={<SpeedIcon sx={{ color: "#85a5c1" }} />}>
               {co2Weekly.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   データがありません
@@ -530,9 +521,7 @@ export default function WeeklyRecordPageContainer() {
                       tick={{ fontSize: 14 }}
                     />
                     <YAxis tick={{ fontSize: 14 }} unit="ppm" />
-                    <Tooltip
-                      labelFormatter={(ts: number) => dayjs(ts).format("MM/DD HH:mm")}
-                    />
+                    <Tooltip labelFormatter={(ts: number) => dayjs(ts).format("MM/DD HH:mm")} />
                     <Line dataKey="value" name="CO₂" stroke="#85a5c1" strokeWidth={2} dot={false} />
                     {/* 日平均線を入れるならここに Line を追加 */}
                   </LineChart>
@@ -541,7 +530,7 @@ export default function WeeklyRecordPageContainer() {
             </ChartCardFrame>
           </Box>
 
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+          <Box sx={{ p: 2, display: "flex", gap: 2 }}>
             {/* EC遷移 */}
             <ChartCardFrame
               title="EC値の推移（週次）"
@@ -555,7 +544,10 @@ export default function WeeklyRecordPageContainer() {
               ) : (
                 <Box sx={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={ecWeekly} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                    <LineChart
+                      data={ecWeekly}
+                      margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+                    >
                       <XAxis dataKey="date" />
                       <YAxis tick={{ fontSize: 14 }} unit="μS/cm" />
                       <Tooltip />
@@ -567,10 +559,8 @@ export default function WeeklyRecordPageContainer() {
               )}
             </ChartCardFrame>
           </Box>
-
         </Container>
       </Box>
     </Box>
   );
 }
-

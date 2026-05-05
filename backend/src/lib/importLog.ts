@@ -1,10 +1,7 @@
 import { supabase } from "./supabase.js";
 
 // plantIdとcsvFilenameでsupabaseに既に取り込まれているかの確認
-export async function isCsvImported(
-  plantId: string,
-  csvFilename: string
-): Promise<boolean> {
+export async function isCsvImported(plantId: string, csvFilename: string): Promise<boolean> {
   const { data, error } = await supabase
     .from("import_logs")
     .select("id")
@@ -24,13 +21,13 @@ export async function insertImportLog(
   plantId: string,
   csvFilename: string,
   csvDate: string,
-  rowCount: number
+  rowCount: number,
 ) {
   const { error } = await supabase.from("import_logs").insert({
     plant_id: plantId,
     csv_filename: csvFilename,
     csv_date: csvDate,
-    row_count: rowCount
+    row_count: rowCount,
   });
 
   if (error) {

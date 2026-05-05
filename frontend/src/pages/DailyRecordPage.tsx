@@ -1,20 +1,23 @@
 import {
-  Typography, Box, Container,
+  Typography,
+  Box,
+  Container,
   Card,
   CardContent,
   Stack,
   Avatar,
   Divider,
-} from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import ThermostatIcon from '@mui/icons-material/Thermostat'
-import { useEffect, useState } from 'react';
-import dayjs, { Dayjs } from 'dayjs';
-import { supabase } from '../lib/supabase';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+} from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import ThermostatIcon from "@mui/icons-material/Thermostat";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import dayjs, { Dayjs } from "dayjs";
+import { supabase } from "../lib/supabase";
+import { PostgrestError } from "@supabase/supabase-js";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import {
   ResponsiveContainer,
   LineChart,
@@ -24,23 +27,66 @@ import {
   Tooltip,
   Legend,
   ReferenceArea,
-} from 'recharts';
-import SunnyIcon from '@mui/icons-material/Sunny';
-import WaterDropIcon from '@mui/icons-material/WaterDrop';
-import BoltIcon from '@mui/icons-material/Bolt';
-import SpeedIcon from '@mui/icons-material/Speed';
+} from "recharts";
+import SunnyIcon from "@mui/icons-material/Sunny";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import BoltIcon from "@mui/icons-material/Bolt";
+import SpeedIcon from "@mui/icons-material/Speed";
 import RecordTabs from "../components/Tab";
-import Header from '../components/Header';
-import BackButton from '../components/BackButton';
-import { useParams } from 'react-router-dom';
-import ChartCardFrame from '../components/ChartCardFrame';
-import React from 'react';
+import Header from "../components/Header";
+import BackButton from "../components/BackButton";
+import { useParams } from "react-router-dom";
+import ChartCardFrame from "../components/ChartCardFrame";
+import React from "react";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+type Co2DataPoint = {
+  time: string;
+  value: number;
+};
+
+type AdviceRule = {
+  from: number;
+  to: number;
+  text: string;
+};
+
+const KOMATSUNA_ADVICE_RULES: AdviceRule[] = [
+  {
+    from: 0,
+    to: 10,
+    text: "発芽適温は20~25℃です。播種後は2~3日で発芽しますが、低温だとこの2~3倍の発芽日数を要します。土は乾きすぎないように。発芽までは特に水分が重要です。",
+  },
+  {
+    from: 11,
+    to: 15,
+    text: "間引き（1回目）を行ってください。目安：子葉の形が正ハートのものを残し、大きすぎるものや小さいものを優先して間引きましょう。株間2cm程度。",
+  },
+  {
+    from: 16,
+    to: 20,
+    text: "本葉2~3枚になったら最終間引きを行ってください。目安：株間4~5cm。本葉4〜5枚までは5℃以下にしないよう保温すると抽苔（とう立ち）予防になります。",
+  },
+  {
+    from: 21,
+    to: 40,
+    text: "葉が次々と展開し始め、株が目に見えて大きくなります。葉色が濃くなってきたら順調に育っています。灌水は控えめに。本葉3〜4枚以降は過湿にすると軟弱徒長しやすくなります。",
+  },
+  {
+    from: 41,
+    to: 50,
+    text: "葉が増えてボリュームが出る時期です。株が密集している場合、軽い補正間引きで風通しを良くすると病気予防になります。",
+  },
+  {
+    from: 51,
+    to: 9999,
+    text: "葉が7〜9枚、草丈25cm前後になれば収穫適期です。収穫が遅れると葉柄が固くなり、アクが強くなります。収穫は朝がおすすめです。葉の水分が多く、みずみずしさが長持ちします。",
+  },
+];
+
 export default function DailyRecordPageContainer() {
-  
   type EnvironmentData = {
     soilTemp: number | null;
     soilMoisture: number | null;
@@ -77,7 +123,7 @@ export default function DailyRecordPageContainer() {
 
   const { plantName } = useParams<{ plantName: string }>();
 
- type EcRow = {
+  type EcRow = {
     ec: number;
     tds: number;
     temperature: number;
@@ -96,56 +142,6 @@ export default function DailyRecordPageContainer() {
     co2: number | null;
   };
 
-  type Co2DataPoint = {
-    time: string;
-    value: number;
-  };
-  
-  type AdviceRule = {
-    from: number;   
-    to: number;     
-    text: string;
-  };
-
-  const KOMATSUNA_ADVICE_RULES: AdviceRule[] = [
-      {
-        from: 0,
-        to: 10,
-        text:
-          "発芽適温は20~25℃です。播種後は2~3日で発芽しますが、低温だとこの2~3倍の発芽日数を要します。土は乾きすぎないように。発芽までは特に水分が重要です。",
-      },
-      {
-        from: 11,
-        to: 15,
-        text:
-          "間引き（1回目）を行ってください。目安：子葉の形が正ハートのものを残し、大きすぎるものや小さいものを優先して間引きましょう。株間2cm程度。",
-      },
-      {
-        from: 16,
-        to: 20,
-        text:
-          "本葉2~3枚になったら最終間引きを行ってください。目安：株間4~5cm。本葉4〜5枚までは5℃以下にしないよう保温すると抽苔（とう立ち）予防になります。",
-      },
-      {
-        from: 21,
-        to: 40,
-        text:
-          "葉が次々と展開し始め、株が目に見えて大きくなります。葉色が濃くなってきたら順調に育っています。灌水は控えめに。本葉3〜4枚以降は過湿にすると軟弱徒長しやすくなります。",
-      },
-      {
-        from: 41,
-        to: 50,
-        text:
-          "葉が増えてボリュームが出る時期です。株が密集している場合、軽い補正間引きで風通しを良くすると病気予防になります。",
-      },
-      {
-        from: 51,
-        to: 9999,
-        text:
-          "葉が7〜9枚、草丈25cm前後になれば収穫適期です。収穫が遅れると葉柄が固くなり、アクが強くなります。収穫は朝がおすすめです。葉の水分が多く、みずみずしさが長持ちします。",
-      },
-    ];
-
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [measuredAt, setMeasuredAt] = useState<string | null>(null);
   const [noDataMessage, setNoDataMessage] = useState<string | null>(null);
@@ -158,47 +154,46 @@ export default function DailyRecordPageContainer() {
   const [co2Daily, setCo2Daily] = useState<Co2DataPoint[]>([]);
   const [latestCo2, setLatestCo2] = useState<Co2DataPoint | null>(null);
   const [plantId, setPlantId] = useState<string | null>(null);
-  
 
-  const fetchEnvironmentData = async (
-    selectedDate: dayjs.Dayjs
-  ) => {
+  const fetchEnvironmentData = useCallback(async (selectedDate: dayjs.Dayjs) => {
     try {
       // JSTとしてそのまま扱う
-      const base = selectedDate.format('YYYY-MM-DD');
-      const isToday = selectedDate.isSame(dayjs(), 'day');
+      const base = selectedDate.format("YYYY-MM-DD");
+      const isToday = selectedDate.isSame(dayjs(), "day");
       if (!plantId) return;
 
-      let query = supabase 
-        .from('environment_measurements')
-        .select(`
+      let query = supabase
+        .from("environment_measurements")
+        .select(
+          `
           measured_at,
           soil_temp,
           soil_moisture,
           room_temp,
           room_humid,
           light
-        `)
-        .eq('plant_id', plantId!)
+        `,
+        )
+        .eq("plant_id", plantId!);
 
       if (isToday) {
         query = query
-          .gte('measured_at', `${base} 00:00:00`)
-          .lte('measured_at', `${base} 23:59:59`)
-          .order('measured_at', { ascending: false })
+          .gte("measured_at", `${base} 00:00:00`)
+          .lte("measured_at", `${base} 23:59:59`)
+          .order("measured_at", { ascending: false })
           .limit(1);
       } else {
-        // 過去日　閲覧時刻のデータを表示
+        // 過去日 閲覧時刻のデータを表示
         // 30分単位で現在時刻を作る
         const now = dayjs();
-        const roundedMinute = now.minute() < 30 ? '00' : '30';
-        const hour = now.hour().toString().padStart(2, '0');
+        const roundedMinute = now.minute() < 30 ? "00" : "30";
+        const hour = now.hour().toString().padStart(2, "0");
         const targetTime = `${hour}:${roundedMinute}`;
 
         query = query
-          .gte('measured_at', `${base} ${targetTime}:00`)
-          .lte('measured_at', `${base} ${targetTime}:59`)
-          .order('measured_at', { ascending: false })
+          .gte("measured_at", `${base} ${targetTime}:00`)
+          .lte("measured_at", `${base} ${targetTime}:59`)
+          .order("measured_at", { ascending: false })
           .limit(1);
       }
 
@@ -215,9 +210,7 @@ export default function DailyRecordPageContainer() {
           light: null,
         });
         setMeasuredAt(null);
-        setNoDataMessage(
-          isToday ? '本日のデータはありません' : '該当時刻のデータはありません'
-        );
+        setNoDataMessage(isToday ? "本日のデータはありません" : "該当時刻のデータはありません");
         return;
       }
 
@@ -231,13 +224,12 @@ export default function DailyRecordPageContainer() {
       });
       setMeasuredAt(record.measured_at);
       setNoDataMessage(null);
-
     } catch (err) {
-      console.error('環境データ取得失敗:', err);
+      console.error("環境データ取得失敗:", err);
     }
-  };
+  }, [plantId]);
 
-  const fetchPlantId = async () => {
+  const fetchPlantId = useCallback(async () => {
     if (!plantName) return;
 
     const { data, error } = await supabase
@@ -252,28 +244,28 @@ export default function DailyRecordPageContainer() {
     }
 
     setPlantId(data.id);
-  };
+  }, [plantName]);
 
-  const fetchDailySensorData = async (
+  const fetchDailySensorData = useCallback(async (
     selectedDate: dayjs.Dayjs,
-    column: 'soil_temp' | 'soil_moisture' | 'room_temp' | 'room_humid' | 'light',
-    setter: React.Dispatch<React.SetStateAction<DailyDataPoint[]>>
+    column: "soil_temp" | "soil_moisture" | "room_temp" | "room_humid" | "light",
+    setter: React.Dispatch<React.SetStateAction<DailyDataPoint[]>>,
   ) => {
     try {
-      const base = selectedDate.format('YYYY-MM-DD');
+      const base = selectedDate.format("YYYY-MM-DD");
 
       if (!plantId) return;
 
-      const { data, error } = await supabase
-        .from('environment_measurements')
+      const { data, error } = (await supabase
+        .from("environment_measurements")
         .select(`measured_at, ${column}`)
-        .eq('plant_id',plantId!)
-        .gte('measured_at', `${base} 00:00:00`)
-        .lte('measured_at', `${base} 23:59:59`)
-        .order('measured_at', { ascending: true }) as {
-          data: EnvironmentRow[] | null;
-          error: any;
-        };
+        .eq("plant_id", plantId!)
+        .gte("measured_at", `${base} 00:00:00`)
+        .lte("measured_at", `${base} 23:59:59`)
+        .order("measured_at", { ascending: true })) as {
+        data: EnvironmentRow[] | null;
+        error: PostgrestError | null;
+      };
 
       if (error) throw error;
 
@@ -285,7 +277,7 @@ export default function DailyRecordPageContainer() {
       const formatted = data
         .filter((row) => row[column] !== null)
         .map((row) => ({
-          time: dayjs(row.measured_at.replace('+00', '')).format('HH:mm'),
+          time: dayjs(row.measured_at.replace("+00", "")).format("HH:mm"),
           value: row[column] as number,
         }));
 
@@ -294,13 +286,12 @@ export default function DailyRecordPageContainer() {
       console.error(`日内推移取得失敗 (${column}):`, err);
       setter([]);
     }
-  };
+  }, [plantId]);
 
   // EC
-  const avg = (values: number[]) =>
-    values.reduce((a, b) => a + b, 0) / values.length;
+  const avg = (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length;
 
-  const fetchEcRowsByDate = async (date: string) => {
+  const fetchEcRowsByDate = useCallback(async (date: string) => {
     if (!plantId) return [];
     const start = `${date} 00:00:00`;
     const end = `${date} 23:59:59`;
@@ -313,9 +304,9 @@ export default function DailyRecordPageContainer() {
       .lte("measured_at", end);
 
     return (data ?? []) as EcRow[];
-  };
+  }, [plantId]);
 
-  const fetchEcDataBySelectedDate = async (selectedDate: string) => {
+  const fetchEcDataBySelectedDate = useCallback(async (selectedDate: string) => {
     if (!plantId) return;
     // 選択日のデータを試す
     let rows = await fetchEcRowsByDate(selectedDate);
@@ -348,14 +339,14 @@ export default function DailyRecordPageContainer() {
 
     // 平均して state にセット
     setEcData({
-      ec: Math.round(avg(rows.map(r => r.ec))),
-      tds: Math.round(avg(rows.map(r => r.tds))),
-      temperature: Number(avg(rows.map(r => r.temperature)).toFixed(1)),
+      ec: Math.round(avg(rows.map((r) => r.ec))),
+      tds: Math.round(avg(rows.map((r) => r.tds))),
+      temperature: Number(avg(rows.map((r) => r.temperature)).toFixed(1)),
       measuredAt: selectedDate,
     });
-  };
+  }, [plantId, fetchEcRowsByDate]);
 
-  const fetchLatestCo2Data = async (selectedDate: dayjs.Dayjs) => {
+  const fetchLatestCo2Data = useCallback(async (selectedDate: dayjs.Dayjs) => {
     if (!plantId) return;
     const base = selectedDate.format("YYYY-MM-DD");
     const isToday = selectedDate.isSame(dayjs(), "day");
@@ -396,9 +387,9 @@ export default function DailyRecordPageContainer() {
       time: dayjs.utc(row.measured_at).format("HH:mm"),
       value: row.co2,
     });
-  };
+  }, [plantId]);
 
-  const fetchDailyCo2Data = async (selectedDate: dayjs.Dayjs) => {
+  const fetchDailyCo2Data = useCallback(async (selectedDate: dayjs.Dayjs) => {
     try {
       const base = selectedDate.format("YYYY-MM-DD");
       if (!plantId) return;
@@ -430,158 +421,166 @@ export default function DailyRecordPageContainer() {
       console.error("CO2 日内データ取得失敗:", err);
       setCo2Daily([]);
     }
-  };
+  }, [plantId]);
 
- // Daily では「その日が何日目か」を見る
-const cultivationStart = dayjs("2025-12-08"); // 本来はDB
-const daysFromStart = selectedDate.diff(cultivationStart, "day");
-const isGermination = daysFromStart <= 10;
-
+  // Daily では「その日が何日目か」を見る
+  const cultivationStart = dayjs("2025-12-08"); // 本来はDB
+  const daysFromStart = selectedDate.diff(cultivationStart, "day");
+  const isGermination = daysFromStart <= 10;
 
   const komatsunaTempRange = isGermination
-  ? [
-      {
-        y1: 20,
-        y2: 25,
-        label: "発芽適温",
-        fill: "#c18585",
-      },
-    ]
-  : [
-      {
-        y1: 15,
-        y2: 25,
-        label: "生育適温",
-        fill: "#92c185",
-      },
-    ];
+    ? [
+        {
+          y1: 20,
+          y2: 25,
+          label: "発芽適温",
+          fill: "#c18585",
+        },
+      ]
+    : [
+        {
+          y1: 15,
+          y2: 25,
+          label: "生育適温",
+          fill: "#92c185",
+        },
+      ];
 
-    const adviceText = React.useMemo(() => {
-      // plantType があるなら、コマツナの時だけ出すなども可能
-      // if (plantType !== "komatsuna") return null;
-      return getKomatsunaAdvice(daysFromStart);
-    }, [daysFromStart /*, plantType*/])
+  const getKomatsunaAdvice = useCallback((daysFromStart: number): string | null => {
+    if (Number.isNaN(daysFromStart)) return null;
+    if (daysFromStart < 0) return "栽培開始日より前の日付です。";
+    const rule = KOMATSUNA_ADVICE_RULES.find(
+      (r) => daysFromStart >= r.from && daysFromStart <= r.to,
+    );
+    return rule?.text ?? null;
+  }, []);
 
-    
+  const adviceText = useMemo(() => {
+    // plantType があるなら、コマツナの時だけ出すなども可能
+    // if (plantType !== "komatsuna") return null;
+    return getKomatsunaAdvice(daysFromStart);
+  }, [daysFromStart, getKomatsunaAdvice]);
 
-    function getKomatsunaAdvice(daysFromStart: number): string | null {
-      if (Number.isNaN(daysFromStart)) return null;
-      if (daysFromStart < 0) return "栽培開始日より前の日付です。";
-      const rule = KOMATSUNA_ADVICE_RULES.find(
-        (r) => daysFromStart >= r.from && daysFromStart <= r.to
-      );
-      return rule?.text ?? null;
-    }
+  useEffect(() => {
+    fetchPlantId();
+  }, [fetchPlantId]);
 
-    useEffect(() => {
-      fetchPlantId();
-    }, [plantName]);
-
-    useEffect(() => {
-      if (!plantId) return;
-      fetchEnvironmentData(selectedDate);
-      fetchDailySensorData(selectedDate, 'soil_temp', setSoilTempDaily);
-      fetchDailySensorData(selectedDate, 'soil_moisture', setSoilMoistureDaily);
-      fetchDailySensorData(selectedDate, 'room_temp', setRoomTempDaily);
-      fetchDailySensorData(selectedDate, 'room_humid', setRoomHumidDaily);
-      fetchDailySensorData(selectedDate, 'light', setLightDaily);
-      fetchEcDataBySelectedDate(
-        dayjs(selectedDate).format("YYYY-MM-DD")
-      );
-      fetchLatestCo2Data(selectedDate);
-      fetchDailyCo2Data(selectedDate);
-    }, [selectedDate, plantId]);
+  useEffect(() => {
+    if (!plantId) return;
+    fetchEnvironmentData(selectedDate);
+    fetchDailySensorData(selectedDate, "soil_temp", setSoilTempDaily);
+    fetchDailySensorData(selectedDate, "soil_moisture", setSoilMoistureDaily);
+    fetchDailySensorData(selectedDate, "room_temp", setRoomTempDaily);
+    fetchDailySensorData(selectedDate, "room_humid", setRoomHumidDaily);
+    fetchDailySensorData(selectedDate, "light", setLightDaily);
+    fetchEcDataBySelectedDate(dayjs(selectedDate).format("YYYY-MM-DD"));
+    fetchLatestCo2Data(selectedDate);
+    fetchDailyCo2Data(selectedDate);
+  }, [
+    selectedDate,
+    plantId,
+    fetchEnvironmentData,
+    fetchDailySensorData,
+    fetchEcDataBySelectedDate,
+    fetchLatestCo2Data,
+    fetchDailyCo2Data,
+  ]);
 
   // 同じ時刻の温度と湿度を1レコードにまとめる
   const roomTHDaily = roomTempDaily.map((tempRow) => {
-  const humidRow = roomHumidDaily.find(
-    (h) => h.time === tempRow.time
-  );
+    const humidRow = roomHumidDaily.find((h) => h.time === tempRow.time);
 
-  return {
-    time: tempRow.time,
-    temp: tempRow.value,
-    humid: humidRow ? humidRow.value : null,
-  };
-});
+    return {
+      time: tempRow.time,
+      temp: tempRow.value,
+      humid: humidRow ? humidRow.value : null,
+    };
+  });
 
   return (
-    <Box 
+    <Box
       sx={{
-        position: 'fixed',
-        inset: 0,           
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.default',
+        position: "fixed",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
       }}
     >
       {/* ヘッダー */}
       <Header />
 
       {/* TODO: 戻るボタンとタブは上部固定にする */}
-      
 
       {/* タブ */}
       <Stack direction="row" spacing={15} alignItems="center">
         <RecordTabs />
-        {plantType && (
-          <BackButton to={`/select-planter/${plantType}`} />
-        )}
+        {plantType && <BackButton to={`/select-planter/${plantType}`} />}
       </Stack>
 
       {/* メイン */}
-      <Box component='main' sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', }}>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}
+      >
         <Container
           maxWidth={false}
           disableGutters
           sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}
-        >          
-          {/* 日付選択 */}    
-          {/* TODO: デフォルトで今日の日付　栽培完了時は最終日の日付に設定 */}      
+        >
+          {/* 日付選択 */}
+          {/* TODO: デフォルトで今日の日付 栽培完了時は最終日の日付に設定 */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker 
-              label='日付を選択'
+            <DatePicker
+              label="日付を選択"
               value={selectedDate}
               onChange={(newValue) => {
                 if (!newValue) return;
                 setSelectedDate(newValue);
-              }} />
+              }}
+            />
           </LocalizationProvider>
 
-          {/* TODO: 閲覧時の時刻を30分単位で表示　12:13分の場合は12:00時点と表示 */}
-          <Typography variant='body2' color='text.secondary'>
+          {/* TODO: 閲覧時の時刻を30分単位で表示 12:13分の場合は12:00時点と表示 */}
+          <Typography variant="body2" color="text.secondary">
             {noDataMessage ? (
-              <Typography color="text.secondary">
-                {noDataMessage}
-              </Typography>
+              <Typography color="text.secondary">{noDataMessage}</Typography>
             ) : (
               measuredAt && (
                 <Typography variant="body2" color="text.secondary">
-                  {dayjs(measuredAt.replace('+00', '')).format('YYYY/MM/DD HH:mm')} 時点
+                  {dayjs(measuredAt.replace("+00", "")).format("YYYY/MM/DD HH:mm")} 時点
                 </Typography>
               )
             )}
-            </Typography>            
+          </Typography>
           {/* 土壌温度、土壌水分量、室内温湿度、日射量表示 */}
           {/* TODO: 当日の場合は最新のデータを表示、前日以前の場合は閲覧時の時刻のデータを表示 */}
-          <Box sx={{p: 2, display: 'flex', gap: 2, alignItems: 'stretch' }}>
+          <Box sx={{ p: 2, display: "flex", gap: 2, alignItems: "stretch" }}>
             <Box>
-              <Box sx={{p: 2, display: 'flex', gap: 2}}>
+              <Box sx={{ p: 2, display: "flex", gap: 2 }}>
                 {/* 土壌湿度 */}
-                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    boxShadow: 3,
+                    p: 1,
+                    bgcoler: "background.paper",
+                    ":hover": { boxShadw: 6 },
+                  }}
+                >
                   <CardContent>
-                    <Stack direction='row' spacing={2} alignItems='center'>                
-                      <Avatar sx={{ bgcolor: '#c1a185' }} variant='rounded' >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar sx={{ bgcolor: "#c1a185" }} variant="rounded">
                         <ThermostatIcon />
                       </Avatar>
-                      <Stack spacing={0.5}>  
-                        <Typography variant='subtitle1' color='text.primary'>
+                      <Stack spacing={0.5}>
+                        <Typography variant="subtitle1" color="text.primary">
                           土壌温度
                         </Typography>
-                        <Typography variant='h6' fontWeight={600}>
-                          {envData.soilTemp !== null ? `${envData.soilTemp} ` : '--'}°C
+                        <Typography variant="h6" fontWeight={600}>
+                          {envData.soilTemp !== null ? `${envData.soilTemp} ` : "--"}°C
                         </Typography>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography variant="body2" color="text.secondary">
                           30分毎更新
                         </Typography>
                       </Stack>
@@ -591,96 +590,126 @@ const isGermination = daysFromStart <= 10;
 
                 {/* 土壌水分量 */}
                 {/* 水やりの時間（6,18時）には印をつける */}
-                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    boxShadow: 3,
+                    p: 1,
+                    bgcoler: "background.paper",
+                    ":hover": { boxShadw: 6 },
+                  }}
+                >
                   <CardContent>
-                    <Stack direction='row' spacing={2} alignItems='center'>                
-                      <Avatar sx={{ bgcolor: '#85a5c1' }} variant='rounded' >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar sx={{ bgcolor: "#85a5c1" }} variant="rounded">
                         <WaterDropIcon />
                       </Avatar>
-                      <Stack spacing={0.5}>  
-                        <Typography variant='subtitle1' color='text.primary'>
+                      <Stack spacing={0.5}>
+                        <Typography variant="subtitle1" color="text.primary">
                           土壌水分量
                         </Typography>
-                        <Typography variant='h6' fontWeight={600}>
-                          {envData.soilMoisture !== null ? `${envData.soilMoisture} ` : '--'}
+                        <Typography variant="h6" fontWeight={600}>
+                          {envData.soilMoisture !== null ? `${envData.soilMoisture} ` : "--"}
                         </Typography>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography variant="body2" color="text.secondary">
                           30分毎更新
                         </Typography>
                       </Stack>
                     </Stack>
                   </CardContent>
-                </Card>  
+                </Card>
 
                 {/* 室内温湿度 */}
-                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    boxShadow: 3,
+                    p: 1,
+                    bgcoler: "background.paper",
+                    ":hover": { boxShadw: 6 },
+                  }}
+                >
                   <CardContent>
-                    <Stack direction='row' spacing={2} alignItems='center'>                
-                      <Avatar sx={{ bgcolor: '#A395A3' }} variant='rounded' >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar sx={{ bgcolor: "#A395A3" }} variant="rounded">
                         <ThermostatIcon />
                       </Avatar>
-                      <Stack spacing={0.5}>  
-                        <Typography variant='subtitle1' color='text.primary'>
+                      <Stack spacing={0.5}>
+                        <Typography variant="subtitle1" color="text.primary">
                           室内温湿度
                         </Typography>
-                        <Box sx={{display: 'flex', gap: 2}}>
-                          <Typography variant='h6' fontWeight={600}>
-                            温度 : {envData.roomTemp ?? '--'} °C
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <Typography variant="h6" fontWeight={600}>
+                            温度 : {envData.roomTemp ?? "--"} °C
                           </Typography>
-                          <Typography variant='h6' fontWeight={600}>
-                            湿度 : {envData.roomHumid ?? '--'} %
+                          <Typography variant="h6" fontWeight={600}>
+                            湿度 : {envData.roomHumid ?? "--"} %
                           </Typography>
                         </Box>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography variant="body2" color="text.secondary">
                           30分毎更新
                         </Typography>
                       </Stack>
                     </Stack>
                   </CardContent>
-                </Card>   
+                </Card>
               </Box>
 
               {/* CO2濃度、EC値表示 */}
-              <Box sx={{p: 2, display: 'flex', gap: 2}}>
+              <Box sx={{ p: 2, display: "flex", gap: 2 }}>
                 {/* 日射量 */}
-                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    boxShadow: 3,
+                    p: 1,
+                    bgcoler: "background.paper",
+                    ":hover": { boxShadw: 6 },
+                  }}
+                >
                   <CardContent>
-                    <Stack direction='row' spacing={2} alignItems='center'>                
-                      <Avatar sx={{ bgcolor: '#c18585' }} variant='rounded' >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar sx={{ bgcolor: "#c18585" }} variant="rounded">
                         <SunnyIcon />
                       </Avatar>
-                      <Stack spacing={0.5}>  
-                        <Typography variant='subtitle1' color='text.primary'>
+                      <Stack spacing={0.5}>
+                        <Typography variant="subtitle1" color="text.primary">
                           日射量
                         </Typography>
-                        <Typography variant='h6' fontWeight={600}>
-                          {envData.light !== null ? `${envData.light} ` : '--'}lux
+                        <Typography variant="h6" fontWeight={600}>
+                          {envData.light !== null ? `${envData.light} ` : "--"}lux
                         </Typography>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography variant="body2" color="text.secondary">
                           30分毎更新
                         </Typography>
                       </Stack>
                     </Stack>
                   </CardContent>
-                </Card>    
+                </Card>
                 {/* CO₂濃度 */}
-                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    boxShadow: 3,
+                    p: 1,
+                    bgcoler: "background.paper",
+                    ":hover": { boxShadw: 6 },
+                  }}
+                >
                   <CardContent>
-                    <Stack direction='row' spacing={2} alignItems='center'>                
-                      <Avatar sx={{ bgcolor: '#85a5c1' }} variant='rounded' >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar sx={{ bgcolor: "#85a5c1" }} variant="rounded">
                         <SpeedIcon />
                       </Avatar>
-                      <Stack spacing={0.5}>  
-                        <Typography variant='subtitle1' color='text.primary'>
+                      <Stack spacing={0.5}>
+                        <Typography variant="subtitle1" color="text.primary">
                           CO₂濃度
                         </Typography>
                         <Typography variant="h6" fontWeight={600}>
                           {latestCo2 ? `${latestCo2.value} ppm` : "--"}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {latestCo2
-                            ? `6時間毎測定 - ${latestCo2.time} 時点`
-                            : "データなし"}
+                          {latestCo2 ? `6時間毎測定 - ${latestCo2.time} 時点` : "データなし"}
                         </Typography>
                       </Stack>
                     </Stack>
@@ -688,15 +717,23 @@ const isGermination = daysFromStart <= 10;
                 </Card>
 
                 {/* EC値 */}
-                <Card sx={{borderRadius: 3, boxShadow: 3, p:1, bgcoler: 'background.paper', ':hover':{boxShadw:6}}}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    boxShadow: 3,
+                    p: 1,
+                    bgcoler: "background.paper",
+                    ":hover": { boxShadw: 6 },
+                  }}
+                >
                   <CardContent>
-                    <Stack direction='row' spacing={2} alignItems='center'>                
-                      <Avatar sx={{ bgcolor: '#c0c185' }} variant='rounded' >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar sx={{ bgcolor: "#c0c185" }} variant="rounded">
                         <BoltIcon />
                       </Avatar>
 
-                      <Stack spacing={0.5}>  
-                        <Typography variant='subtitle1' color='text.primary'>
+                      <Stack spacing={0.5}>
+                        <Typography variant="subtitle1" color="text.primary">
                           EC値（電気伝導率）
                         </Typography>
                         <Typography variant="h6" fontWeight={600}>
@@ -714,7 +751,7 @@ const isGermination = daysFromStart <= 10;
               </Box>
             </Box>
 
-            <Box sx={{pt: 2, pb:4, width: 500, display: "flex" }}>
+            <Box sx={{ pt: 2, pb: 4, width: 500, display: "flex" }}>
               <Card
                 sx={{
                   width: "100%",
@@ -742,9 +779,7 @@ const isGermination = daysFromStart <= 10;
                       {adviceText}
                     </Typography>
                   ) : (
-                    <Typography color="text.secondary">
-                      この日のアドバイスはありません。
-                    </Typography>
+                    <Typography color="text.secondary">この日のアドバイスはありません。</Typography>
                   )}
                 </CardContent>
               </Card>
@@ -752,7 +787,7 @@ const isGermination = daysFromStart <= 10;
           </Box>
 
           {/* 土壌温度、土壌水分量の日内推移 */}
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+          <Box sx={{ p: 2, display: "flex", gap: 2 }}>
             {/* 土壌温度推移 */}
             <ChartCardFrame
               title="土壌温度の推移"
@@ -766,8 +801,8 @@ const isGermination = daysFromStart <= 10;
                     domain={[
                       0,
                       Math.max(
-                        ...soilTempDaily.map(d => d.value),
-                        ...komatsunaTempRange.map(r => r.y2)
+                        ...soilTempDaily.map((d) => d.value),
+                        ...komatsunaTempRange.map((r) => r.y2),
                       ),
                     ]}
                   />
@@ -820,7 +855,7 @@ const isGermination = daysFromStart <= 10;
           </Box>
 
           {/* 室内温湿度、日射量の日内推移 */}
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+          <Box sx={{ p: 2, display: "flex", gap: 2 }}>
             {/* 室内温湿度推移 */}
             <ChartCardFrame
               title="室内温湿度の推移"
@@ -842,8 +877,8 @@ const isGermination = daysFromStart <= 10;
                         domain={[
                           0,
                           Math.max(
-                            ...soilTempDaily.map(d => d.value),
-                            ...komatsunaTempRange.map(r => r.y2)
+                            ...soilTempDaily.map((d) => d.value),
+                            ...komatsunaTempRange.map((r) => r.y2),
                           ),
                         ]}
                       />
@@ -886,10 +921,7 @@ const isGermination = daysFromStart <= 10;
             </ChartCardFrame>
 
             {/* 日射量推移 */}
-            <ChartCardFrame
-              title="日射量の推移"
-              icon={<SunnyIcon sx={{ color: "#c18585" }} />}
-            >
+            <ChartCardFrame title="日射量の推移" icon={<SunnyIcon sx={{ color: "#c18585" }} />}>
               {lightDaily.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   データがありません
@@ -897,7 +929,7 @@ const isGermination = daysFromStart <= 10;
               ) : (
                 <Box sx={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer width="100%" height="110%">
-                    <LineChart data={lightDaily} >
+                    <LineChart data={lightDaily}>
                       <XAxis dataKey="time" />
                       <YAxis tick={{ fontSize: 14 }} unit="lux" />
                       <Tooltip />
@@ -916,7 +948,7 @@ const isGermination = daysFromStart <= 10;
           </Box>
 
           {/* Co2濃度遷移 */}
-          <Box sx={{p: 2, display: 'flex', gap: 2}}>
+          <Box sx={{ p: 2, display: "flex", gap: 2 }}>
             <ChartCardFrame
               title="CO₂濃度の推移"
               icon={<SpeedIcon sx={{ color: "#85a5c1" }} />}
@@ -933,23 +965,15 @@ const isGermination = daysFromStart <= 10;
                       <XAxis dataKey="time" />
                       <YAxis unit="ppm" />
                       <Tooltip />
-                      <Line
-                        dataKey="value"
-                        name="CO₂"
-                        dot
-                        strokeWidth={2}
-                        stroke="#85a5c1"
-                      />
+                      <Line dataKey="value" name="CO₂" dot strokeWidth={2} stroke="#85a5c1" />
                     </LineChart>
                   </ResponsiveContainer>
                 </Box>
               )}
             </ChartCardFrame>
           </Box>
-
         </Container>
       </Box>
     </Box>
   );
 }
-

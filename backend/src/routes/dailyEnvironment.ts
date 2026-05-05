@@ -13,9 +13,8 @@ router.get("/", (req, res) => {
   res.status(200).json({
     plantId,
     date,
-    sourceCsvPath:
-      "/komatsuna_A/raw_data/komatsuna_A_2025-12-09.csv",
-    createdAt: "2025-12-09T23:59:00+09:00"
+    sourceCsvPath: "/komatsuna_A/raw_data/komatsuna_A_2025-12-09.csv",
+    createdAt: "2025-12-09T23:59:00+09:00",
   });
 });
 

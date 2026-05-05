@@ -15,15 +15,13 @@ router.get("/", (req, res) => {
     photos: [
       {
         takenAt: "2025-12-09T06:00:00+09:00",
-        photoPath:
-          "/komatsuna_A/camera/komatsuna_A_2025-12-09_0600.jpg"
+        photoPath: "/komatsuna_A/camera/komatsuna_A_2025-12-09_0600.jpg",
       },
       {
         takenAt: "2025-12-09T12:00:00+09:00",
-        photoPath:
-          "/komatsuna_A/camera/komatsuna_A_2025-12-09_1200.jpg"
-      }
-    ]
+        photoPath: "/komatsuna_A/camera/komatsuna_A_2025-12-09_1200.jpg",
+      },
+    ],
   });
 });
 

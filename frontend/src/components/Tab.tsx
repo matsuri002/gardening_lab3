@@ -18,14 +18,14 @@ const RecordTabs = () => {
   if (!plantName) return null;
 
   return (
-    <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: 'background.paper',  }}>
+    <Box sx={{ maxWidth: { xs: 320, sm: 480 }, bgcolor: "background.paper" }}>
       <Tabs
-         sx={{
+        sx={{
           "& .MuiTab-root": {
-            color: "#A395A3",          // 通常文字色
+            color: "#A395A3", // 通常文字色
           },
           "& .MuiTab-root.Mui-selected": {
-            color: "#85a5c1",          // 選択中文字色
+            color: "#85a5c1", // 選択中文字色
             fontWeight: "bold",
           },
           "& .MuiTabs-indicator": {
@@ -34,12 +34,9 @@ const RecordTabs = () => {
         }}
         value={currentTab()}
         onChange={(_, newValue) => {
-          if (newValue === 0)
-            navigate(`/plants/${plantType}/${plantName}/daily`);
-          if (newValue === 1)
-            navigate(`/plants/${plantType}/${plantName}/weekly`);
-          if (newValue === 2)
-            navigate(`/plants/${plantType}/${plantName}/photo`);
+          if (newValue === 0) navigate(`/plants/${plantType}/${plantName}/daily`);
+          if (newValue === 1) navigate(`/plants/${plantType}/${plantName}/weekly`);
+          if (newValue === 2) navigate(`/plants/${plantType}/${plantName}/photo`);
         }}
       >
         <Tab label="本日の記録" />
@@ -48,6 +45,6 @@ const RecordTabs = () => {
       </Tabs>
     </Box>
   );
-}
+};
 
 export default RecordTabs;

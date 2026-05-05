@@ -12,7 +12,7 @@ const BackButton = ({ to, label = "戻る" }: Props) => {
   return (
     <Button
       size="large"
-      sx={{ p: { xs: 2.5, sm: 3 } , color:"#85a5c1"}}
+      sx={{ p: { xs: 2.5, sm: 3 }, color: "#85a5c1" }}
       onClick={() => navigate(to)}
     >
       {label}
