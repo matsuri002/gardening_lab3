@@ -33,3 +33,16 @@ feat(ci): switch from GitLab CI to GitHub Actions
 **修正内容:**
 - リポジトリが GitHub であることが判明したため、`.gitlab-ci.yml` を削除。
 - GitHub Actions 用のワークフロー定義 `.github/workflows/ci.yml` を作成し、同等の品質チェックを移植。
+
+### コミット3: Frontend の Lint 指摘の修正（WeeklyRecordPage）
+**推奨コミットメッセージ:**
+```text
+fix(frontend): adjust eslint-disable location in WeeklyRecordPage.tsx
+
+- Fix react-hooks/set-state-in-effect error for fetchEcWeeklyData
+- Remove unused eslint-disable directive
+```
+
+**修正内容:**
+- CI パイプラインで検出された `WeeklyRecordPage.tsx` の Lint エラーを修正。
+- `eslint-disable` の位置を正しく調整し、未使用の無効化コメントを削除。

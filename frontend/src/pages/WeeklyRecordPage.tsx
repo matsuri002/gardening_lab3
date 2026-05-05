@@ -319,8 +319,8 @@ export default function WeeklyRecordPageContainer() {
     } else {
       fetchWeeklyStats(endDate, "light").then(setLightWeekly);
     }
-    fetchEcWeeklyData();
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchEcWeeklyData();
     fetchWeeklyCo2Data(endDate);
   }, [
     plantId,
