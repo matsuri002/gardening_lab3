@@ -155,17 +155,18 @@ export default function DailyRecordPageContainer() {
   const [latestCo2, setLatestCo2] = useState<Co2DataPoint | null>(null);
   const [plantId, setPlantId] = useState<string | null>(null);
 
-  const fetchEnvironmentData = useCallback(async (selectedDate: dayjs.Dayjs) => {
-    try {
-      // JSTとしてそのまま扱う
-      const base = selectedDate.format("YYYY-MM-DD");
-      const isToday = selectedDate.isSame(dayjs(), "day");
-      if (!plantId) return;
+  const fetchEnvironmentData = useCallback(
+    async (selectedDate: dayjs.Dayjs) => {
+      try {
+        // JSTとしてそのまま扱う
+        const base = selectedDate.format("YYYY-MM-DD");
+        const isToday = selectedDate.isSame(dayjs(), "day");
+        if (!plantId) return;
 
-      let query = supabase
-        .from("environment_measurements")
-        .select(
-          `
+        let query = supabase
+          .from("environment_measurements")
+          .select(
+            `
           measured_at,
           soil_temp,
           soil_moisture,
@@ -173,61 +174,63 @@ export default function DailyRecordPageContainer() {
           room_humid,
           light
         `,
-        )
-        .eq("plant_id", plantId!);
+          )
+          .eq("plant_id", plantId!);
 
-      if (isToday) {
-        query = query
-          .gte("measured_at", `${base} 00:00:00`)
-          .lte("measured_at", `${base} 23:59:59`)
-          .order("measured_at", { ascending: false })
-          .limit(1);
-      } else {
-        // 過去日 閲覧時刻のデータを表示
-        // 30分単位で現在時刻を作る
-        const now = dayjs();
-        const roundedMinute = now.minute() < 30 ? "00" : "30";
-        const hour = now.hour().toString().padStart(2, "0");
-        const targetTime = `${hour}:${roundedMinute}`;
+        if (isToday) {
+          query = query
+            .gte("measured_at", `${base} 00:00:00`)
+            .lte("measured_at", `${base} 23:59:59`)
+            .order("measured_at", { ascending: false })
+            .limit(1);
+        } else {
+          // 過去日 閲覧時刻のデータを表示
+          // 30分単位で現在時刻を作る
+          const now = dayjs();
+          const roundedMinute = now.minute() < 30 ? "00" : "30";
+          const hour = now.hour().toString().padStart(2, "0");
+          const targetTime = `${hour}:${roundedMinute}`;
 
-        query = query
-          .gte("measured_at", `${base} ${targetTime}:00`)
-          .lte("measured_at", `${base} ${targetTime}:59`)
-          .order("measured_at", { ascending: false })
-          .limit(1);
-      }
+          query = query
+            .gte("measured_at", `${base} ${targetTime}:00`)
+            .lte("measured_at", `${base} ${targetTime}:59`)
+            .order("measured_at", { ascending: false })
+            .limit(1);
+        }
 
-      const { data, error } = await query;
-      if (error) throw error;
+        const { data, error } = await query;
+        if (error) throw error;
 
-      if (!data || data.length === 0) {
-        // 今日だがデータがまだない
+        if (!data || data.length === 0) {
+          // 今日だがデータがまだない
+          setEnvData({
+            soilTemp: null,
+            soilMoisture: null,
+            roomTemp: null,
+            roomHumid: null,
+            light: null,
+          });
+          setMeasuredAt(null);
+          setNoDataMessage(isToday ? "本日のデータはありません" : "該当時刻のデータはありません");
+          return;
+        }
+
+        const record = data[0];
         setEnvData({
-          soilTemp: null,
-          soilMoisture: null,
-          roomTemp: null,
-          roomHumid: null,
-          light: null,
+          soilTemp: record.soil_temp,
+          soilMoisture: record.soil_moisture,
+          roomTemp: record.room_temp,
+          roomHumid: record.room_humid,
+          light: record.light,
         });
-        setMeasuredAt(null);
-        setNoDataMessage(isToday ? "本日のデータはありません" : "該当時刻のデータはありません");
-        return;
+        setMeasuredAt(record.measured_at);
+        setNoDataMessage(null);
+      } catch (err) {
+        console.error("環境データ取得失敗:", err);
       }
-
-      const record = data[0];
-      setEnvData({
-        soilTemp: record.soil_temp,
-        soilMoisture: record.soil_moisture,
-        roomTemp: record.room_temp,
-        roomHumid: record.room_humid,
-        light: record.light,
-      });
-      setMeasuredAt(record.measured_at);
-      setNoDataMessage(null);
-    } catch (err) {
-      console.error("環境データ取得失敗:", err);
-    }
-  }, [plantId]);
+    },
+    [plantId],
+  );
 
   const fetchPlantId = useCallback(async () => {
     if (!plantName) return;
@@ -246,182 +249,197 @@ export default function DailyRecordPageContainer() {
     setPlantId(data.id);
   }, [plantName]);
 
-  const fetchDailySensorData = useCallback(async (
-    selectedDate: dayjs.Dayjs,
-    column: "soil_temp" | "soil_moisture" | "room_temp" | "room_humid" | "light",
-    setter: React.Dispatch<React.SetStateAction<DailyDataPoint[]>>,
-  ) => {
-    try {
-      const base = selectedDate.format("YYYY-MM-DD");
+  const fetchDailySensorData = useCallback(
+    async (
+      selectedDate: dayjs.Dayjs,
+      column: "soil_temp" | "soil_moisture" | "room_temp" | "room_humid" | "light",
+      setter: React.Dispatch<React.SetStateAction<DailyDataPoint[]>>,
+    ) => {
+      try {
+        const base = selectedDate.format("YYYY-MM-DD");
 
-      if (!plantId) return;
+        if (!plantId) return;
 
-      const { data, error } = (await supabase
-        .from("environment_measurements")
-        .select(`measured_at, ${column}`)
-        .eq("plant_id", plantId!)
-        .gte("measured_at", `${base} 00:00:00`)
-        .lte("measured_at", `${base} 23:59:59`)
-        .order("measured_at", { ascending: true })) as {
-        data: EnvironmentRow[] | null;
-        error: PostgrestError | null;
-      };
+        const { data, error } = (await supabase
+          .from("environment_measurements")
+          .select(`measured_at, ${column}`)
+          .eq("plant_id", plantId!)
+          .gte("measured_at", `${base} 00:00:00`)
+          .lte("measured_at", `${base} 23:59:59`)
+          .order("measured_at", { ascending: true })) as {
+          data: EnvironmentRow[] | null;
+          error: PostgrestError | null;
+        };
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (!data || data.length === 0) {
+        if (!data || data.length === 0) {
+          setter([]);
+          return;
+        }
+
+        const formatted = data
+          .filter((row) => row[column] !== null)
+          .map((row) => ({
+            time: dayjs(row.measured_at.replace("+00", "")).format("HH:mm"),
+            value: row[column] as number,
+          }));
+
+        setter(formatted);
+      } catch (err) {
+        console.error(`日内推移取得失敗 (${column}):`, err);
         setter([]);
-        return;
       }
-
-      const formatted = data
-        .filter((row) => row[column] !== null)
-        .map((row) => ({
-          time: dayjs(row.measured_at.replace("+00", "")).format("HH:mm"),
-          value: row[column] as number,
-        }));
-
-      setter(formatted);
-    } catch (err) {
-      console.error(`日内推移取得失敗 (${column}):`, err);
-      setter([]);
-    }
-  }, [plantId]);
+    },
+    [plantId],
+  );
 
   // EC
   const avg = (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length;
 
-  const fetchEcRowsByDate = useCallback(async (date: string) => {
-    if (!plantId) return [];
-    const start = `${date} 00:00:00`;
-    const end = `${date} 23:59:59`;
+  const fetchEcRowsByDate = useCallback(
+    async (date: string) => {
+      if (!plantId) return [];
+      const start = `${date} 00:00:00`;
+      const end = `${date} 23:59:59`;
 
-    const { data } = await supabase
-      .from("ec_measurements")
-      .select("ec, tds, temperature, measured_at")
-      .eq("plant_id", plantId!)
-      .gte("measured_at", start)
-      .lte("measured_at", end);
-
-    return (data ?? []) as EcRow[];
-  }, [plantId]);
-
-  const fetchEcDataBySelectedDate = useCallback(async (selectedDate: string) => {
-    if (!plantId) return;
-    // 選択日のデータを試す
-    let rows = await fetchEcRowsByDate(selectedDate);
-
-    // なければ「過去で一番新しい日」を探す
-    if (rows.length === 0) {
       const { data } = await supabase
         .from("ec_measurements")
-        .select("measured_at")
+        .select("ec, tds, temperature, measured_at")
         .eq("plant_id", plantId!)
-        .lt("measured_at", `${selectedDate} 00:00:00`)
-        .order("measured_at", { ascending: false })
-        .limit(1);
+        .gte("measured_at", start)
+        .lte("measured_at", end);
 
-      if (!data || data.length === 0) {
-        setEcData(null);
-        return;
-      }
+      return (data ?? []) as EcRow[];
+    },
+    [plantId],
+  );
 
-      const latestDate = dayjs(data[0].measured_at).format("YYYY-MM-DD");
-      rows = await fetchEcRowsByDate(latestDate);
-
-      if (rows.length === 0) {
-        setEcData(null);
-        return;
-      }
-
-      selectedDate = latestDate;
-    }
-
-    // 平均して state にセット
-    setEcData({
-      ec: Math.round(avg(rows.map((r) => r.ec))),
-      tds: Math.round(avg(rows.map((r) => r.tds))),
-      temperature: Number(avg(rows.map((r) => r.temperature)).toFixed(1)),
-      measuredAt: selectedDate,
-    });
-  }, [plantId, fetchEcRowsByDate]);
-
-  const fetchLatestCo2Data = useCallback(async (selectedDate: dayjs.Dayjs) => {
-    if (!plantId) return;
-    const base = selectedDate.format("YYYY-MM-DD");
-    const isToday = selectedDate.isSame(dayjs(), "day");
-
-    let query = supabase
-      .from("co2_measurements")
-      .select("measured_at, co2")
-      .eq("plant_id", plantId!);
-
-    if (isToday) {
-      // 今日 → 最新1件
-      query = query
-        .gte("measured_at", `${base} 00:00:00`)
-        .lte("measured_at", `${base} 23:59:59`)
-        .order("measured_at", { ascending: false })
-        .limit(1);
-    } else {
-      // 過去日 → 閲覧時刻を6時間単位で丸める
-      const hour = Math.floor(dayjs().hour() / 6) * 6;
-      const targetHour = hour.toString().padStart(2, "0");
-
-      query = query
-        .gte("measured_at", `${base} ${targetHour}:00:00`)
-        .lte("measured_at", `${base} ${targetHour}:59:59`)
-        .order("measured_at", { ascending: false })
-        .limit(1);
-    }
-
-    const { data, error } = await query;
-    if (error || !data || data.length === 0) {
-      setLatestCo2(null);
-      return;
-    }
-
-    const row = data[0];
-
-    setLatestCo2({
-      time: dayjs.utc(row.measured_at).format("HH:mm"),
-      value: row.co2,
-    });
-  }, [plantId]);
-
-  const fetchDailyCo2Data = useCallback(async (selectedDate: dayjs.Dayjs) => {
-    try {
-      const base = selectedDate.format("YYYY-MM-DD");
+  const fetchEcDataBySelectedDate = useCallback(
+    async (selectedDate: string) => {
       if (!plantId) return;
+      // 選択日のデータを試す
+      let rows = await fetchEcRowsByDate(selectedDate);
 
-      const { data, error } = await supabase
+      // なければ「過去で一番新しい日」を探す
+      if (rows.length === 0) {
+        const { data } = await supabase
+          .from("ec_measurements")
+          .select("measured_at")
+          .eq("plant_id", plantId!)
+          .lt("measured_at", `${selectedDate} 00:00:00`)
+          .order("measured_at", { ascending: false })
+          .limit(1);
+
+        if (!data || data.length === 0) {
+          setEcData(null);
+          return;
+        }
+
+        const latestDate = dayjs(data[0].measured_at).format("YYYY-MM-DD");
+        rows = await fetchEcRowsByDate(latestDate);
+
+        if (rows.length === 0) {
+          setEcData(null);
+          return;
+        }
+
+        selectedDate = latestDate;
+      }
+
+      // 平均して state にセット
+      setEcData({
+        ec: Math.round(avg(rows.map((r) => r.ec))),
+        tds: Math.round(avg(rows.map((r) => r.tds))),
+        temperature: Number(avg(rows.map((r) => r.temperature)).toFixed(1)),
+        measuredAt: selectedDate,
+      });
+    },
+    [plantId, fetchEcRowsByDate],
+  );
+
+  const fetchLatestCo2Data = useCallback(
+    async (selectedDate: dayjs.Dayjs) => {
+      if (!plantId) return;
+      const base = selectedDate.format("YYYY-MM-DD");
+      const isToday = selectedDate.isSame(dayjs(), "day");
+
+      let query = supabase
         .from("co2_measurements")
         .select("measured_at, co2")
-        .eq("plant_id", plantId!)
-        .gte("measured_at", `${base} 00:00:00`)
-        .lte("measured_at", `${base} 23:59:59`)
-        .order("measured_at", { ascending: true });
+        .eq("plant_id", plantId!);
 
-      if (error) throw error;
+      if (isToday) {
+        // 今日 → 最新1件
+        query = query
+          .gte("measured_at", `${base} 00:00:00`)
+          .lte("measured_at", `${base} 23:59:59`)
+          .order("measured_at", { ascending: false })
+          .limit(1);
+      } else {
+        // 過去日 → 閲覧時刻を6時間単位で丸める
+        const hour = Math.floor(dayjs().hour() / 6) * 6;
+        const targetHour = hour.toString().padStart(2, "0");
 
-      if (!data || data.length === 0) {
-        setCo2Daily([]);
+        query = query
+          .gte("measured_at", `${base} ${targetHour}:00:00`)
+          .lte("measured_at", `${base} ${targetHour}:59:59`)
+          .order("measured_at", { ascending: false })
+          .limit(1);
+      }
+
+      const { data, error } = await query;
+      if (error || !data || data.length === 0) {
+        setLatestCo2(null);
         return;
       }
 
-      const formatted: DailyDataPoint[] = data
-        .filter((row: Co2Row) => row.co2 !== null)
-        .map((row: Co2Row) => ({
-          time: dayjs.utc(row.measured_at).format("HH:mm"),
-          value: row.co2 as number,
-        }));
+      const row = data[0];
 
-      setCo2Daily(formatted);
-    } catch (err) {
-      console.error("CO2 日内データ取得失敗:", err);
-      setCo2Daily([]);
-    }
-  }, [plantId]);
+      setLatestCo2({
+        time: dayjs.utc(row.measured_at).format("HH:mm"),
+        value: row.co2,
+      });
+    },
+    [plantId],
+  );
+
+  const fetchDailyCo2Data = useCallback(
+    async (selectedDate: dayjs.Dayjs) => {
+      try {
+        const base = selectedDate.format("YYYY-MM-DD");
+        if (!plantId) return;
+
+        const { data, error } = await supabase
+          .from("co2_measurements")
+          .select("measured_at, co2")
+          .eq("plant_id", plantId!)
+          .gte("measured_at", `${base} 00:00:00`)
+          .lte("measured_at", `${base} 23:59:59`)
+          .order("measured_at", { ascending: true });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          setCo2Daily([]);
+          return;
+        }
+
+        const formatted: DailyDataPoint[] = data
+          .filter((row: Co2Row) => row.co2 !== null)
+          .map((row: Co2Row) => ({
+            time: dayjs.utc(row.measured_at).format("HH:mm"),
+            value: row.co2 as number,
+          }));
+
+        setCo2Daily(formatted);
+      } catch (err) {
+        console.error("CO2 日内データ取得失敗:", err);
+        setCo2Daily([]);
+      }
+    },
+    [plantId],
+  );
 
   // Daily では「その日が何日目か」を見る
   const cultivationStart = dayjs("2025-12-08"); // 本来はDB

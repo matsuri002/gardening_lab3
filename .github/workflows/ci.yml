@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "feat/*", "main" ]
+    branches: ["feat/*", "main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   check-and-build:
@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: ${{ matrix.directory }}/package-lock.json
 
       - name: Install dependencies

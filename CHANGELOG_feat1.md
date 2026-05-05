@@ -15,13 +15,13 @@ feat(setup): establish quality baseline and CI/CD configuration
 
 ## 1. 開発環境・品質管理設定の導入
 
-| ファイル | 役割 |
-| :--- | :--- |
-| `.editorconfig` | インデント、改行コード、文字コードの統一設定 |
-| `.prettierrc` | Prettier による自動整形のルール定義 |
-| `.prettierignore` | 自動整形の除外対象（node_modules, dist, .gemini 等）の指定 |
-| `frontend/eslint.config.js` | React/TypeScript 用の最新 ESLint 設定（Prettier統合） |
-| `backend/eslint.config.js` | Node.js/TypeScript 用の最新 ESLint 設定（Prettier統合） |
+| ファイル                    | 役割                                                       |
+| :-------------------------- | :--------------------------------------------------------- |
+| `.editorconfig`             | インデント、改行コード、文字コードの統一設定               |
+| `.prettierrc`               | Prettier による自動整形のルール定義                        |
+| `.prettierignore`           | 自動整形の除外対象（node_modules, dist, .gemini 等）の指定 |
+| `frontend/eslint.config.js` | React/TypeScript 用の最新 ESLint 設定（Prettier統合）      |
+| `backend/eslint.config.js`  | Node.js/TypeScript 用の最新 ESLint 設定（Prettier統合）    |
 
 ## 2. Backend の修正内容
 
@@ -34,6 +34,7 @@ feat(setup): establish quality baseline and CI/CD configuration
 ## 3. Frontend の修正内容
 
 ### 共通の改善
+
 - **React Hooks の最適化**:
   - すべてのデータ取得関数を `useCallback` でラップし、レンダリングごとの関数再生成を抑制。
   - `useEffect` の依存配列に不足していた関数や変数をすべて追加。
@@ -42,6 +43,7 @@ feat(setup): establish quality baseline and CI/CD configuration
   - API レスポンスの `forEach` 等で使用されていた `any` を `Record<string, unknown>` 等に修正。
 
 ### 各ページの個別修正
+
 - **DailyRecordPage.tsx**:
   - コメント内の全角スペース（Irregular whitespace）の除去。
   - `getKomatsunaAdvice` を `useCallback` 化し、`useMemo` の依存関係を最適化。
@@ -54,7 +56,9 @@ feat(setup): establish quality baseline and CI/CD configuration
   - `useEffect` の依存配列に `plantType` を追加。
 
 ## 4. 追加された NPM スクリプト
+
 各ディレクトリ（frontend/backend）の `package.json` に以下を追加しました。
+
 - `npm run lint`: ESLint による静的解析
 - `npm run lint:fix`: ESLint による自動修正
 - `npm run format`: Prettier によるプロジェクト全域の自動整形

@@ -75,11 +75,7 @@ function parseMeasuredAt(time: string): string {
 /**
  * co2_measurements に UPSERT
  */
-async function upsertCo2Measurements(
-  plantId: string,
-  rows: Co2CsvRow[],
-  sourceCsvPath: string,
-) {
+async function upsertCo2Measurements(plantId: string, rows: Co2CsvRow[], sourceCsvPath: string) {
   const records = rows.map((row) => ({
     plant_id: plantId,
     measured_at: parseMeasuredAt(row.time),

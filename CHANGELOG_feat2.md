@@ -59,3 +59,16 @@ fix(backend): fix 'Object is possibly undefined' errors in test files
 **修正内容:**
 - CI パイプラインのビルドジョブ（tsc）で検出された型エラーを修正。
 - `testScanCo2Data.ts` および `testScanEcData.ts` において、配列のインデックスアクセスに対する `undefined` チェックを厳格化。
+
+### コミット5: プロジェクト全体のフォーマット修正
+**推奨コミットメッセージ:**
+```text
+style: apply Prettier formatting to all files
+
+- Run prettier --write . across the project
+- Ensure CI format check passes
+```
+
+**修正内容:**
+- CI パイプラインのフォーマットチェックで検出されたスタイルの不整合を一括修正。
+- ワークフロー定義ファイル、チャンクログ、および各ページコンポーネントに整形を適用。
