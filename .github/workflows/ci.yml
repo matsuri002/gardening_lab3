@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: ["feat/*", "main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  check-and-build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        directory: [frontend, backend]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: ${{ matrix.directory }}/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.directory }}
+          npm ci
+
+      - name: Lint check
+        run: |
+          cd ${{ matrix.directory }}
+          npm run lint
+
+      - name: Format check
+        if: matrix.directory == 'frontend' # ルート全体のフォーマットチェックは一度でよいため
+        run: npx prettier --check .
+
+      - name: Build check
+        run: |
+          cd ${{ matrix.directory }}
+          npm run build

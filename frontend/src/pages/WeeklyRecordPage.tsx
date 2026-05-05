@@ -81,70 +81,74 @@ export default function WeeklyRecordPageContainer() {
       endDate: dayjs.Dayjs,
       column: "soil_temp" | "room_temp" | "room_humid" | "soil_moisture" | "light",
     ): Promise<WeeklyStatPoint[]> => {
-    if (!plantId) return [];
-    const end = endDate.endOf("day");
-    const start = end.subtract(6, "day").startOf("day");
+      if (!plantId) return [];
+      const end = endDate.endOf("day");
+      const start = end.subtract(6, "day").startOf("day");
 
-    const { data, error } = await supabase
-      .from("environment_measurements")
-      .select(`measured_at, ${column}`)
-      .eq("plant_id", plantId!)
-      .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
-      .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"));
+      const { data, error } = await supabase
+        .from("environment_measurements")
+        .select(`measured_at, ${column}`)
+        .eq("plant_id", plantId!)
+        .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
+        .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"));
 
-    if (error || !data) return [];
+      if (error || !data) return [];
 
-    // 日付ごとにまとめる
-    const grouped: Record<string, number[]> = {};
+      // 日付ごとにまとめる
+      const grouped: Record<string, number[]> = {};
 
-    data.forEach((row: { measured_at: string; [key: string]: unknown }) => {
-      if (row[column] == null) return;
+      data.forEach((row: { measured_at: string; [key: string]: unknown }) => {
+        if (row[column] == null) return;
 
-      const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
-      if (!grouped[date]) grouped[date] = [];
-      grouped[date].push(Number(row[column]));
-    });
+        const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(Number(row[column]));
+      });
 
-    return Object.entries(grouped).map(([date, values]) => {
-      const max = Math.max(...values);
-      const min = Math.min(...values);
-      const avg = values.reduce((a, b) => a + b, 0) / values.length;
+      return Object.entries(grouped).map(([date, values]) => {
+        const max = Math.max(...values);
+        const min = Math.min(...values);
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
 
-      return {
-        date,
-        max: Number(max.toFixed(1)),
-        avg: Number(avg.toFixed(1)),
-        min: Number(min.toFixed(1)),
-      };
-    });
-  }, [plantId]);
+        return {
+          date,
+          max: Number(max.toFixed(1)),
+          avg: Number(avg.toFixed(1)),
+          min: Number(min.toFixed(1)),
+        };
+      });
+    },
+    [plantId],
+  );
 
   const fetchWeeklyRawData = useCallback(
     async (
       endDate: dayjs.Dayjs,
       column: "soil_temp" | "room_temp" | "room_humid" | "soil_moisture" | "light",
     ): Promise<RawPoint[]> => {
-    const end = endDate.endOf("day");
-    const start = end.subtract(6, "day").startOf("day");
-    if (!plantId) return [];
+      const end = endDate.endOf("day");
+      const start = end.subtract(6, "day").startOf("day");
+      if (!plantId) return [];
 
-    const { data, error } = await supabase
-      .from("environment_measurements")
-      .select(`measured_at, ${column}`)
-      .eq("plant_id", plantId!)
-      .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
-      .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"))
-      .order("measured_at", { ascending: true });
+      const { data, error } = await supabase
+        .from("environment_measurements")
+        .select(`measured_at, ${column}`)
+        .eq("plant_id", plantId!)
+        .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
+        .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"))
+        .order("measured_at", { ascending: true });
 
-    if (error || !data) return [];
+      if (error || !data) return [];
 
-    return data
-      .filter((row: { [key: string]: unknown }) => row[column] != null)
-      .map((row: { measured_at: string; [key: string]: unknown }) => {
-        const m = dayjs((row.measured_at as string).replace("+00", ""));
-        return { ts: m.valueOf(), value: Number(row[column]) };
-      });
-  }, [plantId]);
+      return data
+        .filter((row: { [key: string]: unknown }) => row[column] != null)
+        .map((row: { measured_at: string; [key: string]: unknown }) => {
+          const m = dayjs((row.measured_at as string).replace("+00", ""));
+          return { ts: m.valueOf(), value: Number(row[column]) };
+        });
+    },
+    [plantId],
+  );
 
   type ViewMode = "standard" | "processed";
 
@@ -192,18 +196,25 @@ export default function WeeklyRecordPageContainer() {
       // 日付ごとにグループ化して平均を計算
       const grouped: Record<string, EcWeeklyPoint[]> = {};
 
-      data.forEach((row: { ec: number | null; tds: number | null; temperature: number | null; measured_at: string }) => {
-        if (row.ec == null) return;
+      data.forEach(
+        (row: {
+          ec: number | null;
+          tds: number | null;
+          temperature: number | null;
+          measured_at: string;
+        }) => {
+          if (row.ec == null) return;
 
-        const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push({
-          date,
-          ec: Number(row.ec),
-          tds: Number(row.tds),
-          temperature: Number(row.temperature),
-        });
-      });
+          const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
+          if (!grouped[date]) grouped[date] = [];
+          grouped[date].push({
+            date,
+            ec: Number(row.ec),
+            tds: Number(row.tds),
+            temperature: Number(row.temperature),
+          });
+        },
+      );
 
       // 日付ごとの平均を算出
       const averaged = Object.entries(grouped).map(([date, rows]) => {
@@ -226,43 +237,46 @@ export default function WeeklyRecordPageContainer() {
     }
   }, [plantId]);
 
-  const fetchWeeklyCo2Data = useCallback(async (endDate: dayjs.Dayjs) => {
-    try {
-      const end = endDate.endOf("day");
-      const start = end.subtract(6, "day").startOf("day");
-      if (!plantId) return;
+  const fetchWeeklyCo2Data = useCallback(
+    async (endDate: dayjs.Dayjs) => {
+      try {
+        const end = endDate.endOf("day");
+        const start = end.subtract(6, "day").startOf("day");
+        if (!plantId) return;
 
-      const { data, error } = await supabase
-        .from("co2_measurements")
-        .select("measured_at, co2")
-        .eq("plant_id", plantId!)
-        .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
-        .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"))
-        .order("measured_at", { ascending: true });
+        const { data, error } = await supabase
+          .from("co2_measurements")
+          .select("measured_at, co2")
+          .eq("plant_id", plantId!)
+          .gte("measured_at", start.format("YYYY-MM-DD HH:mm:ss"))
+          .lte("measured_at", end.format("YYYY-MM-DD HH:mm:ss"))
+          .order("measured_at", { ascending: true });
 
-      if (error || !data) {
+        if (error || !data) {
+          setCo2Weekly([]);
+          return;
+        }
+
+        const formatted: Co2WeeklyPoint[] = data
+          .filter((row) => row.co2 != null)
+          .map((row) => {
+            // ※ measured_at がUTCならタイムゾーン注意。今は既存の replace を踏襲
+            const m = dayjs(row.measured_at.replace("+00", ""));
+            return {
+              ts: m.valueOf(), // ← X軸の実値として使う
+              datetime: m.format("YYYY/MM/DD HH:mm"), // ← Tooltip 表示用
+              value: Number(row.co2),
+            };
+          });
+
+        setCo2Weekly(formatted);
+      } catch (err) {
+        console.error("CO₂週次データ取得失敗:", err);
         setCo2Weekly([]);
-        return;
       }
-
-      const formatted: Co2WeeklyPoint[] = data
-        .filter((row) => row.co2 != null)
-        .map((row) => {
-          // ※ measured_at がUTCならタイムゾーン注意。今は既存の replace を踏襲
-          const m = dayjs(row.measured_at.replace("+00", ""));
-          return {
-            ts: m.valueOf(), // ← X軸の実値として使う
-            datetime: m.format("YYYY/MM/DD HH:mm"), // ← Tooltip 表示用
-            value: Number(row.co2),
-          };
-        });
-
-      setCo2Weekly(formatted);
-    } catch (err) {
-      console.error("CO₂週次データ取得失敗:", err);
-      setCo2Weekly([]);
-    }
-  }, [plantId]);
+    },
+    [plantId],
+  );
 
   const cultivationStart = dayjs("2025-12-08"); // 実際はDBから
 
@@ -319,8 +333,8 @@ export default function WeeklyRecordPageContainer() {
     } else {
       fetchWeeklyStats(endDate, "light").then(setLightWeekly);
     }
-    fetchEcWeeklyData();
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchEcWeeklyData();
     fetchWeeklyCo2Data(endDate);
   }, [
     plantId,
