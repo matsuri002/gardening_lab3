@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 dayjs.extend(utc);

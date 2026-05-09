@@ -4,7 +4,7 @@ import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import SunnyIcon from "@mui/icons-material/Sunny";
 import BoltIcon from "@mui/icons-material/Bolt";
 import dayjs from "dayjs";
-import type { EnvironmentData, EcData, Co2DataPoint } from "../../hooks/useDailyEnvironment";
+import type { EnvironmentData, EcData, Co2DataPoint } from "../../../hooks/useDailyEnvironment/useDailyEnvironment";
 
 type Props = {
   envData: EnvironmentData;

@@ -31,3 +31,21 @@ feat(refactor): restructure DailyRecordPage with Harness Engineering approach
   - `dayjs` の `utc` プラグインをフック内で適切に拡張。
 - **品質確認**:
   - `tsc --noEmit` および `npm run lint` をパスし、既存機能の整合性を確認。
+
+### コミット2: ディレクトリ構成の最適化（Co-location の導入）
+**推奨コミットメッセージ:**
+```text
+feat(refactor): organize components and specs using co-location pattern
+
+- Move components and their specifications into unified directories
+- Restructure hooks to include their documentation
+- Update relative import paths for the new directory hierarchy
+```
+
+**修正内容:**
+- **Co-location 構成の適用**:
+  - `frontend/src/components/DailyRecord/[ComponentName]/`: コンポーネント本体と仕様書（.md）を同一フォルダに配置。
+  - `frontend/src/hooks/[HookName]/`: カスタムフック本体と仕様書（.md）を同一フォルダに配置。
+  - `frontend/src/pages/DailyRecordPage/`: ページマスター仕様書を配置。
+- **インポートパスの修正**:
+  - ディレクトリ階層の変更に伴う、コンポーネント間およびフックへの相対パスをすべて更新。

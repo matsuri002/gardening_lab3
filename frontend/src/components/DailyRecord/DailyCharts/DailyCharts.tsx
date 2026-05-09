@@ -13,8 +13,8 @@ import ThermostatIcon from "@mui/icons-material/Thermostat";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import SunnyIcon from "@mui/icons-material/Sunny";
 import SpeedIcon from "@mui/icons-material/Speed";
-import ChartCardFrame from "../ChartCardFrame";
-import type { DailyDataPoint, Co2DataPoint } from "../../hooks/useDailyEnvironment";
+import ChartCardFrame from "../../ChartCardFrame";
+import type { DailyDataPoint, Co2DataPoint } from "../../../hooks/useDailyEnvironment/useDailyEnvironment";
 
 type Props = {
   soilTempDaily: DailyDataPoint[];

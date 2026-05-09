@@ -3,8 +3,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { Dayjs } from "dayjs";
-import RecordTabs from "../Tab";
-import BackButton from "../BackButton";
+import RecordTabs from "../../Tab";
+import BackButton from "../../BackButton";
 
 type Props = {
   selectedDate: Dayjs;

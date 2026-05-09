@@ -3,11 +3,11 @@ import { useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { useParams } from "react-router-dom";
 import Header from "../components/Header";
-import { useDailyEnvironment } from "../hooks/useDailyEnvironment";
-import DateSelector from "../components/DailyRecord/DateSelector";
-import EnvironmentSummary from "../components/DailyRecord/EnvironmentSummary";
-import AdviceSection from "../components/DailyRecord/AdviceSection";
-import DailyCharts from "../components/DailyRecord/DailyCharts";
+import { useDailyEnvironment } from "../hooks/useDailyEnvironment/useDailyEnvironment";
+import DateSelector from "../components/DailyRecord/DateSelector/DateSelector";
+import EnvironmentSummary from "../components/DailyRecord/EnvironmentSummary/EnvironmentSummary";
+import AdviceSection from "../components/DailyRecord/AdviceSection/AdviceSection";
+import DailyCharts from "../components/DailyRecord/DailyCharts/DailyCharts";
 
 export default function DailyRecordPageContainer() {
   const { plantType, plantName } = useParams<{
