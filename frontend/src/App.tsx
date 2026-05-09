@@ -1,6 +1,6 @@
 import TopPageContainer from "./pages/TopPage";
 import SelectPlanterPageContainer from "./pages/SelectPlanterPage";
-import DailyRecordPageContainer from "./pages/DailyRecordPage";
+import DailyRecordPageContainer from "./pages/DailyRecordPage/DailyRecordPage";
 import WeeklyRecordPageContainer from "./pages/WeeklyRecordPage";
 import PhotoPageContainer from "./pages/PhotoPage";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
