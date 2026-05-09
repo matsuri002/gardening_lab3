@@ -49,3 +49,19 @@ feat(refactor): organize components and specs using co-location pattern
   - `frontend/src/pages/DailyRecordPage/`: ページマスター仕様書を配置。
 - **インポートパスの修正**:
   - ディレクトリ階層の変更に伴う、コンポーネント間およびフックへの相対パスをすべて更新。
+
+### コミット3: ページコンポーネントの Co-location 完遂
+**推奨コミットメッセージ:**
+```text
+feat(refactor): move DailyRecordPage.tsx into its dedicated directory
+
+- Relocate DailyRecordPage.tsx to pages/DailyRecordPage/
+- Update App.tsx routing and page-internal imports
+```
+
+**修正内容:**
+- **ページの Co-location 化**:
+  - `frontend/src/pages/DailyRecordPage/`: ページコンポーネント本体（.tsx）を仕様書と同じフォルダに移動。
+- **インポートパスの最終調整**:
+  - `App.tsx` のルーティングパスを更新。
+  - `DailyRecordPage.tsx` 内部のインポートパスを、一段深くなった階層（`../../`）に合わせて修正。
