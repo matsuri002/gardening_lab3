@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent, Stack, Typography } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material";
 
 type Props = {
   title: string;
@@ -7,11 +8,12 @@ type Props = {
   action?: React.ReactNode; // 右上（トグルなど）
   children: React.ReactNode; // 中身は自由
   width?: number | string; // Card幅
+  sx?: SxProps<Theme>;
 };
 
-export default function ChartCardFrame({ title, icon, action, children, width = 700 }: Props) {
+export default function ChartCardFrame({ title, icon, action, children, width, sx }: Props) {
   return (
-    <Card sx={{ width, borderRadius: 3, boxShadow: 3, p: 1 }}>
+    <Card sx={{ width: width ?? 700, borderRadius: 3, boxShadow: 3, p: 1, ...sx }}>
       <CardContent>
         <Stack spacing={1} sx={{ width: "100%" }}>
           {/* ヘッダー */}
