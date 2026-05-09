@@ -22,3 +22,20 @@ feat/4: define development documentation standards (Issue/PR templates)
   - タイトル形式を `feat/[番号]: [概要]` に統一。
   - AI による回答をマークダウン形式（コピー用）で出力することを義務付け。
   - 完了定義 (DoD) をプロジェクトの品質基準として Issue に組み込むフローを確立。
+
+### コミット2: PR 標準運用の策定とテンプレートの分離
+**推奨コミットメッセージ:**
+```text
+feat/4: separate Issue/PR concerns and define PR Standard
+
+- Remove PR section from docs/standards/issue_template.md
+- Create docs/standards/pr_standard.md for detailed implementation reporting
+- Ensure PR descriptions reflect actual code changes (diff-based)
+```
+
+**修正内容:**
+- **運用の分離**: Issue は「方向性」、PR は「事実」に集中させるようテンプレートを分離。
+- **PR 標準の策定**:
+  - `docs/standards/pr_standard.md`: 実際のコード差分や CHANGELOG に基づいた詳細な報告ルールを定義。
+- **GitHub 連携**:
+  - `.github/PULL_REQUEST_TEMPLATE.md` を作成し、Issue の DoD を引き継ぐ構造を構築。
