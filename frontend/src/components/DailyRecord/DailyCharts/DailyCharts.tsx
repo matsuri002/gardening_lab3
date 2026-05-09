@@ -14,7 +14,10 @@ import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import SunnyIcon from "@mui/icons-material/Sunny";
 import SpeedIcon from "@mui/icons-material/Speed";
 import ChartCardFrame from "../../ChartCardFrame";
-import type { DailyDataPoint, Co2DataPoint } from "../../../hooks/useDailyEnvironment/useDailyEnvironment";
+import type {
+  DailyDataPoint,
+  Co2DataPoint,
+} from "../../../hooks/useDailyEnvironment/useDailyEnvironment";
 
 type Props = {
   soilTempDaily: DailyDataPoint[];
@@ -103,7 +106,13 @@ export default function DailyCharts({
                 <XAxis dataKey="time" />
                 <YAxis unit="%" />
                 <Tooltip />
-                <Line dataKey="value" name="土壌水分量" stroke="#85a5c1" strokeWidth={2} dot={false} />
+                <Line
+                  dataKey="value"
+                  name="土壌水分量"
+                  stroke="#85a5c1"
+                  strokeWidth={2}
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -138,8 +147,22 @@ export default function DailyCharts({
                 ))}
                 <Tooltip />
                 <Legend />
-                <Line yAxisId="left" dataKey="temp" name="室内温度" stroke="#c18585" strokeWidth={2} dot={false} />
-                <Line yAxisId="right" dataKey="humid" name="室内湿度" stroke="#85a5c1" strokeWidth={2} dot={false} />
+                <Line
+                  yAxisId="left"
+                  dataKey="temp"
+                  name="室内温度"
+                  stroke="#c18585"
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  yAxisId="right"
+                  dataKey="humid"
+                  name="室内湿度"
+                  stroke="#85a5c1"
+                  strokeWidth={2}
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           )}

@@ -75,10 +75,7 @@ export default function DailyRecordPageContainer() {
         </Container>
       </Box>
 
-      <Backdrop
-        open={loading}
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-      >
+      <Backdrop open={loading} sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <CircularProgress color="inherit" />
       </Backdrop>
     </Box>

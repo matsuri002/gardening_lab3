@@ -120,7 +120,8 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
   const [latestCo2, setLatestCo2] = useState<Co2DataPoint | null>(null);
 
   // --- Helpers ---
-  const avg = (values: number[]) => (values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0);
+  const avg = (values: number[]) =>
+    values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
 
   // --- Fetchers ---
 
@@ -174,7 +175,13 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
         if (error) throw error;
 
         if (!data || data.length === 0) {
-          setEnvData({ soilTemp: null, soilMoisture: null, roomTemp: null, roomHumid: null, light: null });
+          setEnvData({
+            soilTemp: null,
+            soilMoisture: null,
+            roomTemp: null,
+            roomHumid: null,
+            light: null,
+          });
           setMeasuredAt(null);
           setNoDataMessage(isToday ? "本日のデータはありません" : "該当時刻のデータはありません");
           return;
@@ -296,7 +303,10 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
       const base = targetDate.format("YYYY-MM-DD");
       const isToday = targetDate.isSame(dayjs(), "day");
 
-      let query = supabase.from("co2_measurements").select("measured_at, co2").eq("plant_id", plantId);
+      let query = supabase
+        .from("co2_measurements")
+        .select("measured_at, co2")
+        .eq("plant_id", plantId);
 
       if (isToday) {
         query = query
@@ -403,7 +413,9 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
   const adviceText = useMemo(() => {
     if (Number.isNaN(daysFromStart)) return null;
     if (daysFromStart < 0) return "栽培開始日より前の日付です。";
-    const rule = KOMATSUNA_ADVICE_RULES.find((r) => daysFromStart >= r.from && daysFromStart <= r.to);
+    const rule = KOMATSUNA_ADVICE_RULES.find(
+      (r) => daysFromStart >= r.from && daysFromStart <= r.to,
+    );
     return rule?.text ?? null;
   }, [daysFromStart]);
 

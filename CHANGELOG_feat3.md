@@ -65,3 +65,17 @@ feat(refactor): move DailyRecordPage.tsx into its dedicated directory
 - **インポートパスの最終調整**:
   - `App.tsx` のルーティングパスを更新。
   - `DailyRecordPage.tsx` 内部のインポートパスを、一段深くなった階層（`../../`）に合わせて修正。
+
+### コミット4: コードスタイルの修正（Prettier 適用）
+**推奨コミットメッセージ:**
+```text
+chore: fix code formatting issues across frontend
+
+- Run prettier --write to resolve styling inconsistencies
+- Fix formatting in relocated components, hooks, and specifications
+```
+
+**修正内容:**
+- **フォーマットの自動修正**:
+  - `npx prettier --write .` を実行し、11 ファイルのスタイル不一致を解消。
+  - ディレクトリ移動および新規作成した `.md`, `.tsx`, `.ts` ファイルのスタイルをプロジェクト基準に適合させた。
