@@ -6,7 +6,9 @@
 ## コミット履歴
 
 ### コミット1: DailyRecordPage のリファクタリングと型安全性の強化（ハーネス導入）
+
 **推奨コミットメッセージ:**
+
 ```text
 feat(refactor): restructure DailyRecordPage with Harness Engineering approach
 
@@ -17,6 +19,7 @@ feat(refactor): restructure DailyRecordPage with Harness Engineering approach
 ```
 
 **修正内容:**
+
 - **ハーネス（仕様書）の導入**:
   - `docs/specs/DailyRecordPage.md` (全体設計)
   - `docs/specs/hooks/useDailyEnvironment.md` (ロジック)
@@ -33,7 +36,9 @@ feat(refactor): restructure DailyRecordPage with Harness Engineering approach
   - `tsc --noEmit` および `npm run lint` をパスし、既存機能の整合性を確認。
 
 ### コミット2: ディレクトリ構成の最適化（Co-location の導入）
+
 **推奨コミットメッセージ:**
+
 ```text
 feat(refactor): organize components and specs using co-location pattern
 
@@ -43,6 +48,7 @@ feat(refactor): organize components and specs using co-location pattern
 ```
 
 **修正内容:**
+
 - **Co-location 構成の適用**:
   - `frontend/src/components/DailyRecord/[ComponentName]/`: コンポーネント本体と仕様書（.md）を同一フォルダに配置。
   - `frontend/src/hooks/[HookName]/`: カスタムフック本体と仕様書（.md）を同一フォルダに配置。
@@ -51,7 +57,9 @@ feat(refactor): organize components and specs using co-location pattern
   - ディレクトリ階層の変更に伴う、コンポーネント間およびフックへの相対パスをすべて更新。
 
 ### コミット3: ページコンポーネントの Co-location 完遂
+
 **推奨コミットメッセージ:**
+
 ```text
 feat(refactor): move DailyRecordPage.tsx into its dedicated directory
 
@@ -60,6 +68,7 @@ feat(refactor): move DailyRecordPage.tsx into its dedicated directory
 ```
 
 **修正内容:**
+
 - **ページの Co-location 化**:
   - `frontend/src/pages/DailyRecordPage/`: ページコンポーネント本体（.tsx）を仕様書と同じフォルダに移動。
 - **インポートパスの最終調整**:
@@ -67,7 +76,9 @@ feat(refactor): move DailyRecordPage.tsx into its dedicated directory
   - `DailyRecordPage.tsx` 内部のインポートパスを、一段深くなった階層（`../../`）に合わせて修正。
 
 ### コミット4: コードスタイルの修正（Prettier 適用）
+
 **推奨コミットメッセージ:**
+
 ```text
 chore: fix code formatting issues across frontend
 
@@ -76,6 +87,22 @@ chore: fix code formatting issues across frontend
 ```
 
 **修正内容:**
+
 - **フォーマットの自動修正**:
   - `npx prettier --write .` を実行し、11 ファイルのスタイル不一致を解消。
   - ディレクトリ移動および新規作成した `.md`, `.tsx`, `.ts` ファイルのスタイルをプロジェクト基準に適合させた。
+
+### コミット5: CHANGELOG_feat3.md のフォーマット修正
+
+**推奨コミットメッセージ:**
+
+```text
+chore: fix formatting of CHANGELOG_feat3.md
+
+- Run prettier --write on CHANGELOG_feat3.md to resolve lint warnings
+```
+
+**修正内容:**
+
+- **ドキュメントのフォーマット修正**:
+  - `CHANGELOG_feat3.md` 自体の記述スタイルを Prettier で修正し、パイプラインの警告を解消。
