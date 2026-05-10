@@ -93,7 +93,7 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
       if (error || !data) return [];
 
       const grouped: Record<string, number[]> = {};
-      data.forEach((row: { measured_at: string; [key: string]: any }) => {
+      data.forEach((row: { measured_at: string } & Record<string, unknown>) => {
         if (row[column] == null) return;
         const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
         if (!grouped[date]) grouped[date] = [];
@@ -135,8 +135,8 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
       if (error || !data) return [];
 
       return data
-        .filter((row: any) => row[column] != null)
-        .map((row: any) => {
+        .filter((row: Record<string, unknown>) => row[column] != null)
+        .map((row: { measured_at: string } & Record<string, unknown>) => {
           const m = dayjs(row.measured_at.replace("+00", ""));
           return { ts: m.valueOf(), value: Number(row[column]) };
         });
@@ -159,17 +159,24 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
       }
 
       const grouped: Record<string, EcWeeklyPoint[]> = {};
-      data.forEach((row: any) => {
-        if (row.ec == null) return;
-        const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push({
-          date,
-          ec: Number(row.ec),
-          tds: Number(row.tds),
-          temperature: Number(row.temperature),
-        });
-      });
+      data.forEach(
+        (row: {
+          ec: number | null;
+          tds: number | null;
+          temperature: number | null;
+          measured_at: string;
+        }) => {
+          if (row.ec == null) return;
+          const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
+          if (!grouped[date]) grouped[date] = [];
+          grouped[date].push({
+            date,
+            ec: Number(row.ec),
+            tds: Number(row.tds),
+            temperature: Number(row.temperature),
+          });
+        },
+      );
 
       const averaged = Object.entries(grouped).map(([date, rows]) => {
         const ecAvg = rows.reduce((sum, r) => sum + r.ec, 0) / rows.length;
@@ -266,6 +273,7 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
 
   // 初期化: plantId取得
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPlantId();
   }, [fetchPlantId]);
 
@@ -303,7 +311,9 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
       fetchWeeklyStats(endDate, "light").then(setLightWeekly);
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEcWeeklyData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchWeeklyCo2Data(endDate);
   }, [
     plantId,
