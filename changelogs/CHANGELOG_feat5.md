@@ -50,3 +50,22 @@
   - `docs/standards/commit_standard.md`: コミットメッセージの本文を日本語とするようルールを改定。
 - **履歴管理の運用変更**:
   - 以降の推奨コミットメッセージを日本語で生成するよう AI の運用を調整。
+
+### コミット4: UI コンポーネントの分割と整理 (Co-location)
+
+**推奨コミットメッセージ:**
+
+```text
+♻️ feat/5: WeeklyRecordPage の UI 分割と Co-location の適用
+```
+
+**修正内容:**
+
+- **コンポーネントの抽出**:
+  - `components/WeeklyRecord/WeeklyDateSelector/`: 日付範囲選択 UI を独立。
+  - `components/WeeklyRecord/WeeklyCharts/`: グラフ表示セクションを独立。
+- **ページの再構築**:
+  - `WeeklyRecordPage.tsx`: 約 580 行から約 50 行へ大幅にスリム化。
+  - `useWeeklyEnvironment` フックと各コンポーネントを繋ぐ純粋なコンテナとして再定義。
+- **仕様の明文化**:
+  - 各新規コンポーネントディレクトリに仕様書 (.md) を作成し、構成を定義。

@@ -238,6 +238,32 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
     return [xTicks7[0], end];
   }, [xTicks7]);
 
+  const cultivationStart = dayjs("2025-12-08"); // 実際はDBから
+  const daysFromStart = endDate.diff(cultivationStart, "day");
+  const isGermination = daysFromStart <= 10;
+
+  const komatsunaTempRange = useMemo(
+    () =>
+      isGermination
+        ? [
+            {
+              y1: 20,
+              y2: 25,
+              label: "発芽適温",
+              fill: "#c18585",
+            },
+          ]
+        : [
+            {
+              y1: 15,
+              y2: 25,
+              label: "生育適温",
+              fill: "#92c185",
+            },
+          ],
+    [isGermination],
+  );
+
   // 初期化: plantId取得
   useEffect(() => {
     fetchPlantId();
@@ -299,6 +325,7 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
     setEndDate,
     xTicks7,
     xDomain7,
+    komatsunaTempRange,
     soilTemp: {
       mode: soilTempMode,
       setMode: setSoilTempMode,
