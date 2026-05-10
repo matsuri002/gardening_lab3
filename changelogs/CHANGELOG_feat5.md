@@ -19,3 +19,19 @@
   - `pages/WeeklyRecordPage/WeeklyRecordPage.md` を作成し、構成案とデータフローを明文化。
 - **インポートパスの修正**:
   - `App.tsx` 内の `WeeklyRecordPageContainer` の参照パスを更新。
+
+### コミット2: カスタムフック useWeeklyEnvironment の抽出
+
+**推奨コミットメッセージ:**
+
+```text
+♻️ feat/5: extract useWeeklyEnvironment hook for logic reuse
+```
+
+**修正内容:**
+
+- **ロジックの抽出**:
+  - `hooks/useWeeklyEnvironment/useWeeklyEnvironment.ts`: `WeeklyRecordPage` からデータフェッチ、集計、状態管理を完全に分離。
+  - `hooks/useWeeklyEnvironment/useWeeklyEnvironment.md`: フックの I/O と責務を定義。
+- **データ処理の隠蔽**:
+  - 日ごとの統計計算（Max/Min/Avg）や時系列データの整形ロジックをフック内部に封じ込め。
