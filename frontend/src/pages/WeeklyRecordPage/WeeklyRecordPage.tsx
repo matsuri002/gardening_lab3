@@ -9,14 +9,14 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import SpeedIcon from "@mui/icons-material/Speed";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import { ResponsiveContainer, LineChart, XAxis, YAxis, Legend, Line, Tooltip } from "recharts";
-import RecordTabs from "../components/Tab";
-import Header from "../components/Header";
-import BackButton from "../components/BackButton";
+import RecordTabs from "../../components/Tab";
+import Header from "../../components/Header";
+import BackButton from "../../components/BackButton";
 import { useParams } from "react-router-dom";
-import DualModeChartCard from "../components/DualModeChartCard";
-import ChartCardFrame from "../components/ChartCardFrame";
+import DualModeChartCard from "../../components/DualModeChartCard";
+import ChartCardFrame from "../../components/ChartCardFrame";
 
 export default function WeeklyRecordPageContainer() {
   type WeeklyStatPoint = {
