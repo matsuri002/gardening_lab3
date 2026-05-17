@@ -1,10 +1,10 @@
 import { Typography, Box, Container, Button, Card, CardContent, Stack } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import dayjs from "dayjs";
-import RecordTabs from "../components/Tab";
-import Header from "../components/Header";
-import BackButton from "../components/BackButton";
+import RecordTabs from "../../components/Tab";
+import Header from "../../components/Header";
+import BackButton from "../../components/BackButton";
 import { useParams } from "react-router-dom";
 
 type PhotoRecord = {
