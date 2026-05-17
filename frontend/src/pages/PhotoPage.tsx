@@ -56,6 +56,10 @@ export default function PhotoPageContainer() {
 
   const fetchPlantId = useCallback(async () => {
     if (!plantName) return;
+    if (import.meta.env.VITE_USE_MOCK === "true") {
+      setPlantId("mock_plant_id");
+      return;
+    }
 
     const { data, error } = await supabase
       .from("plants")
@@ -79,6 +83,34 @@ export default function PhotoPageContainer() {
   const fetchLatestPhoto = useCallback(async () => {
     if (!plantId) return;
     setLoading(true);
+
+    if (import.meta.env.VITE_USE_MOCK === "true") {
+      const mockPhotos: PhotoRecord[] = [
+        {
+          id: "m1",
+          taken_at: "2026-05-15 06:00:00",
+          storage_path: "",
+          photo_url: "/mock_photos/photo1.jpg",
+        },
+        {
+          id: "m2",
+          taken_at: "2026-05-16 06:00:00",
+          storage_path: "",
+          photo_url: "/mock_photos/photo2.jpg",
+        },
+        {
+          id: "m3",
+          taken_at: "2026-05-17 06:00:00",
+          storage_path: "",
+          photo_url: "/mock_photos/photo3.jpg",
+        },
+      ];
+      setPhotos(mockPhotos);
+      setCurrentIndex(mockPhotos.length - 1);
+      setLatestPhoto(mockPhotos[mockPhotos.length - 1]);
+      setLoading(false);
+      return;
+    }
 
     const { data, error } = await supabase
       .from("photos")
