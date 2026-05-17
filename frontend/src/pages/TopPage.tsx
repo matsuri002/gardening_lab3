@@ -10,6 +10,10 @@ export default function TopPageContainer() {
 
   useEffect(() => {
     const fetchPlantTypes = async () => {
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        setPlantTypes(["コマツナ", "トマト"]);
+        return;
+      }
       const { data, error } = await supabase.from("plants").select("plant_type");
 
       if (error) {

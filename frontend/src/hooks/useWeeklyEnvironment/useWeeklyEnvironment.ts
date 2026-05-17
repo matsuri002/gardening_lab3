@@ -1,6 +1,12 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import {
+  generateMockWeeklyStats,
+  generateMockWeeklyRawData,
+  generateMockEcWeekly,
+  generateMockCo2Weekly,
+} from "../../mocks/generators";
 
 export type WeeklyStatPoint = {
   date: string;
@@ -61,6 +67,10 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
 
   const fetchPlantId = useCallback(async () => {
     if (!plantName) return;
+    if (import.meta.env.VITE_USE_MOCK === "true") {
+      setPlantId("mock_plant_id");
+      return;
+    }
     const { data, error } = await supabase
       .from("plants")
       .select("id")
@@ -80,6 +90,21 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
       column: "soil_temp" | "room_temp" | "room_humid" | "soil_moisture" | "light",
     ): Promise<WeeklyStatPoint[]> => {
       if (!plantId) return [];
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        let minBase = 0,
+          maxBase = 100;
+        if (column === "soil_temp" || column === "room_temp") {
+          minBase = 15;
+          maxBase = 30;
+        } else if (column === "soil_moisture" || column === "room_humid") {
+          minBase = 40;
+          maxBase = 80;
+        } else if (column === "light") {
+          minBase = 100;
+          maxBase = 1000;
+        }
+        return generateMockWeeklyStats(endDate, minBase, maxBase);
+      }
       const end = endDate.endOf("day");
       const start = end.subtract(6, "day").startOf("day");
 
@@ -121,6 +146,21 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
       column: "soil_temp" | "room_temp" | "room_humid" | "soil_moisture" | "light",
     ): Promise<RawPoint[]> => {
       if (!plantId) return [];
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        let min = 0,
+          max = 100;
+        if (column === "soil_temp" || column === "room_temp") {
+          min = 15;
+          max = 30;
+        } else if (column === "soil_moisture" || column === "room_humid") {
+          min = 40;
+          max = 80;
+        } else if (column === "light") {
+          min = 100;
+          max = 1000;
+        }
+        return generateMockWeeklyRawData(endDate, min, max);
+      }
       const end = endDate.endOf("day");
       const start = end.subtract(6, "day").startOf("day");
 
@@ -144,61 +184,72 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
     [plantId],
   );
 
-  const fetchEcWeeklyData = useCallback(async () => {
-    if (!plantId) return;
-    try {
-      const { data, error } = await supabase
-        .from("ec_measurements")
-        .select(`ec, tds, temperature, measured_at`)
-        .eq("plant_id", plantId!)
-        .order("measured_at", { ascending: true });
-
-      if (error || !data) {
-        setEcWeekly([]);
+  const fetchEcWeeklyData = useCallback(
+    async (endDate: dayjs.Dayjs) => {
+      if (!plantId) return;
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        setEcWeekly(generateMockEcWeekly(endDate));
         return;
       }
+      try {
+        const { data, error } = await supabase
+          .from("ec_measurements")
+          .select(`ec, tds, temperature, measured_at`)
+          .eq("plant_id", plantId!)
+          .order("measured_at", { ascending: true });
 
-      const grouped: Record<string, EcWeeklyPoint[]> = {};
-      data.forEach(
-        (row: {
-          ec: number | null;
-          tds: number | null;
-          temperature: number | null;
-          measured_at: string;
-        }) => {
-          if (row.ec == null) return;
-          const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
-          if (!grouped[date]) grouped[date] = [];
-          grouped[date].push({
+        if (error || !data) {
+          setEcWeekly([]);
+          return;
+        }
+
+        const grouped: Record<string, EcWeeklyPoint[]> = {};
+        data.forEach(
+          (row: {
+            ec: number | null;
+            tds: number | null;
+            temperature: number | null;
+            measured_at: string;
+          }) => {
+            if (row.ec == null) return;
+            const date = dayjs(row.measured_at.replace("+00", "")).format("MM/DD");
+            if (!grouped[date]) grouped[date] = [];
+            grouped[date].push({
+              date,
+              ec: Number(row.ec),
+              tds: Number(row.tds),
+              temperature: Number(row.temperature),
+            });
+          },
+        );
+
+        const averaged = Object.entries(grouped).map(([date, rows]) => {
+          const ecAvg = rows.reduce((sum, r) => sum + r.ec, 0) / rows.length;
+          const tdsAvg = rows.reduce((sum, r) => sum + r.tds, 0) / rows.length;
+          const tempAvg = rows.reduce((sum, r) => sum + r.temperature, 0) / rows.length;
+          return {
             date,
-            ec: Number(row.ec),
-            tds: Number(row.tds),
-            temperature: Number(row.temperature),
-          });
-        },
-      );
-
-      const averaged = Object.entries(grouped).map(([date, rows]) => {
-        const ecAvg = rows.reduce((sum, r) => sum + r.ec, 0) / rows.length;
-        const tdsAvg = rows.reduce((sum, r) => sum + r.tds, 0) / rows.length;
-        const tempAvg = rows.reduce((sum, r) => sum + r.temperature, 0) / rows.length;
-        return {
-          date,
-          ec: Number(ecAvg.toFixed(1)),
-          tds: Number(tdsAvg.toFixed(1)),
-          temperature: Number(tempAvg.toFixed(1)),
-        };
-      });
-      setEcWeekly(averaged);
-    } catch (err) {
-      console.error("ECデータ取得失敗:", err);
-      setEcWeekly([]);
-    }
-  }, [plantId]);
+            ec: Number(ecAvg.toFixed(1)),
+            tds: Number(tdsAvg.toFixed(1)),
+            temperature: Number(tempAvg.toFixed(1)),
+          };
+        });
+        setEcWeekly(averaged);
+      } catch (err) {
+        console.error("ECデータ取得失敗:", err);
+        setEcWeekly([]);
+      }
+    },
+    [plantId],
+  );
 
   const fetchWeeklyCo2Data = useCallback(
     async (endDate: dayjs.Dayjs) => {
       if (!plantId) return;
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        setCo2Weekly(generateMockCo2Weekly(endDate));
+        return;
+      }
       try {
         const end = endDate.endOf("day");
         const start = end.subtract(6, "day").startOf("day");
@@ -312,7 +363,7 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchEcWeeklyData();
+    fetchEcWeeklyData(endDate);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchWeeklyCo2Data(endDate);
   }, [

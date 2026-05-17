@@ -19,6 +19,23 @@ export default function SelectPlanterPageContainer() {
 
   useEffect(() => {
     const fetchPlants = async () => {
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        setPlants([
+          {
+            id: "mock_1",
+            year: 2026,
+            plant_type: plantType ?? "コマツナ",
+            plant_name: `${plantType}1号`,
+          },
+          {
+            id: "mock_2",
+            year: 2026,
+            plant_type: plantType ?? "コマツナ",
+            plant_name: `${plantType}2号`,
+          },
+        ]);
+        return;
+      }
       const { data, error } = await supabase
         .from("plants")
         .select("*")
