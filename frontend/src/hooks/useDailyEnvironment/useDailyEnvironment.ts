@@ -3,6 +3,12 @@ import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { supabase } from "../../lib/supabase";
 import type { PostgrestError } from "@supabase/supabase-js";
+import {
+  generateMockEnvData,
+  generateMockDailyData,
+  generateMockEcData,
+  generateMockCo2Daily,
+} from "../../mocks/generators";
 
 dayjs.extend(utc);
 
@@ -127,6 +133,10 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
 
   const fetchPlantId = useCallback(async () => {
     if (!plantName) return;
+    if (import.meta.env.VITE_USE_MOCK === "true") {
+      setPlantId("mock_plant_id");
+      return;
+    }
     const { data, error } = await supabase
       .from("plants")
       .select("id")
@@ -143,6 +153,12 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
   const fetchEnvironmentData = useCallback(
     async (targetDate: Dayjs) => {
       if (!plantId) return;
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        setEnvData(generateMockEnvData());
+        setMeasuredAt(dayjs().format("YYYY-MM-DD HH:mm:ss"));
+        setNoDataMessage(null);
+        return;
+      }
       try {
         const base = targetDate.format("YYYY-MM-DD");
         const isToday = targetDate.isSame(dayjs(), "day");
@@ -211,6 +227,22 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
       setter: React.Dispatch<React.SetStateAction<DailyDataPoint[]>>,
     ) => {
       if (!plantId) return;
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        let min = 0,
+          max = 100;
+        if (column === "soil_temp" || column === "room_temp") {
+          min = 15;
+          max = 30;
+        } else if (column === "soil_moisture" || column === "room_humid") {
+          min = 40;
+          max = 80;
+        } else if (column === "light") {
+          min = 100;
+          max = 1000;
+        }
+        setter(generateMockDailyData(targetDate, min, max));
+        return;
+      }
       try {
         const base = targetDate.format("YYYY-MM-DD");
         const { data, error } = (await supabase
@@ -262,6 +294,10 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
   const fetchEcDataBySelectedDate = useCallback(
     async (targetDateStr: string) => {
       if (!plantId) return;
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        setEcData(generateMockEcData(targetDateStr));
+        return;
+      }
       let rows = await fetchEcRowsByDate(targetDateStr);
 
       if (rows.length === 0) {
@@ -300,6 +336,10 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
   const fetchLatestCo2Data = useCallback(
     async (targetDate: Dayjs) => {
       if (!plantId) return;
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        setLatestCo2({ time: dayjs().format("HH:mm"), value: 600 });
+        return;
+      }
       const base = targetDate.format("YYYY-MM-DD");
       const isToday = targetDate.isSame(dayjs(), "day");
 
@@ -340,6 +380,10 @@ export function useDailyEnvironment(plantName: string | undefined, selectedDate:
   const fetchDailyCo2Data = useCallback(
     async (targetDate: Dayjs) => {
       if (!plantId) return;
+      if (import.meta.env.VITE_USE_MOCK === "true") {
+        setCo2Daily(generateMockCo2Daily(targetDate));
+        return;
+      }
       try {
         const base = targetDate.format("YYYY-MM-DD");
         const { data, error } = await supabase
