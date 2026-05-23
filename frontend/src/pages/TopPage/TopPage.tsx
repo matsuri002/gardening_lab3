@@ -1,33 +1,11 @@
-import { Typography, Box, Container, Button } from "@mui/material";
-import Header from "../components/Header";
-import { useEffect, useState } from "react";
+import { Typography, Box, Container, Button, CircularProgress, Backdrop } from "@mui/material";
+import Header from "../../components/Header";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { usePlantTypes } from "../../hooks/usePlantTypes/usePlantTypes";
 
 export default function TopPageContainer() {
-  const [plantTypes, setPlantTypes] = useState<string[]>([]);
+  const { plantTypes, loading } = usePlantTypes();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchPlantTypes = async () => {
-      if (import.meta.env.VITE_USE_MOCK === "true") {
-        setPlantTypes(["コマツナ", "トマト"]);
-        return;
-      }
-      const { data, error } = await supabase.from("plants").select("plant_type");
-
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      const uniqueTypes = Array.from(new Set(data.map((item) => item.plant_type)));
-
-      setPlantTypes(uniqueTypes);
-    };
-
-    fetchPlantTypes();
-  }, []);
 
   return (
     <Box
@@ -69,6 +47,11 @@ export default function TopPageContainer() {
           </Box>
         </Container>
       </Box>
+
+      {/* ローディング表示 */}
+      <Backdrop open={loading} sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Box>
   );
 }

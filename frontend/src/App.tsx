@@ -1,5 +1,5 @@
-import TopPageContainer from "./pages/TopPage";
-import SelectPlanterPageContainer from "./pages/SelectPlanterPage";
+import TopPageContainer from "./pages/TopPage/TopPage";
+import SelectPlanterPageContainer from "./pages/SelectPlanterPage/SelectPlanterPage";
 import DailyRecordPageContainer from "./pages/DailyRecordPage/DailyRecordPage";
 import WeeklyRecordPageContainer from "./pages/WeeklyRecordPage/WeeklyRecordPage";
 import PhotoPageContainer from "./pages/PhotoPage/PhotoPage";
