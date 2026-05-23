@@ -59,3 +59,18 @@
   - 「コマツナを選択」とハードコードされていた箇所を、URLパラメータに基づき「{plantType}を選択」と動的に表示するように修正（TODOコメントの解消）。
   - データロード中の UX 改善のため、`Backdrop` + `CircularProgress` のローディングインジケーターを追加。
   - Co-location化に伴い、`Header` や `BackButton` などのインポートパスを修正。
+
+### コミット4: 検証と最終調整
+
+**推奨コミットメッセージ:**
+
+```text
+🔧 fix: feat/8 の Lint / Format 検証と最終調整
+```
+
+**修正内容:**
+
+- **品質保証とコード検証**:
+  - `wsl` 環境上で `npm run lint` を実行し、新規追加・修正ファイルにおける TypeScript / ESLint 関連のエラーおよび警告が一切存在しないクリーンな状態であることを検証。
+  - プロジェクトルートおよび `frontend/` 配下にて `npx prettier --check .` を実行し、すべての改修ファイルが Prettier の規約通りに正しくフォーマットされていることを確認。
+  - `changelogs/CHANGELOG_feat8.md` を最終更新し、コミット履歴の全記録を完了。
