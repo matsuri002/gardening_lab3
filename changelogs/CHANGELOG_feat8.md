@@ -20,5 +20,23 @@
 - **インポートの修正**:
   - `App.tsx` 内の `TopPageContainer` と `SelectPlanterPageContainer` のインポートパスを更新。
 - **仕様の明文化**:
-  - `pages/TopPage/TopPage.md` を作成し、抽出するフックとコンポーネントの全体設計を定義。
+  - 仕様書 `pages/TopPage/TopPage.md` を作成し、抽出するフックとコンポーネントの全体設計を定義。
   - `pages/SelectPlanterPage/SelectPlanterPage.md` を作成し、抽出するフックとコンポーネントの全体設計を定義。
+
+### コミット2: usePlantTypes フックの抽出と TopPage のリファクタリング
+
+**推奨コミットメッセージ:**
+
+```text
+✨ feat/8: TopPage のロジックを usePlantTypes に抽出
+```
+
+**修正内容:**
+
+- **カスタムフックの作成 (`usePlantTypes`)**:
+  - `hooks/usePlantTypes/usePlantTypes.ts` とその仕様書 `usePlantTypes.md` を作成。
+  - `TopPage.tsx` に直接書かれていた Supabase へのデータフェッチ処理およびモック判定ロジックをフック内部へ隠蔽・抽出。
+- **TopPage.tsx のリファクタリング**:
+  - 状態管理と副作用を完全に排除し、`usePlantTypes` フックから返される値を受け取るのみの「純粋なUIコンポーネント」に変更。
+  - データ取得中の UX を向上するため、`Backdrop` と `CircularProgress` によるローディング画面を導入。
+  - Co-location化に伴い、`Header` コンポーネントなどのインポートパスを相対参照の階層を合わせて修正。
