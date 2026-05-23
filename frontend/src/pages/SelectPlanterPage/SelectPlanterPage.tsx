@@ -1,8 +1,8 @@
 import { Typography, Box, Container, Button } from "@mui/material";
-import Header from "../components/Header";
-import BackButton from "../components/BackButton";
+import Header from "../../components/Header";
+import BackButton from "../../components/BackButton";
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import { useNavigate, useParams } from "react-router-dom";
 
 type Plant = {

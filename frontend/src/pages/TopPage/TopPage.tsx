@@ -1,8 +1,8 @@
 import { Typography, Box, Container, Button } from "@mui/material";
-import Header from "../components/Header";
+import Header from "../../components/Header";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 export default function TopPageContainer() {
   const [plantTypes, setPlantTypes] = useState<string[]>([]);
