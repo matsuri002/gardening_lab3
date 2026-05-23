@@ -1,57 +1,13 @@
-import { Typography, Box, Container, Button } from "@mui/material";
+import { Typography, Box, Container, Button, CircularProgress, Backdrop } from "@mui/material";
 import Header from "../../components/Header";
 import BackButton from "../../components/BackButton";
-import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
 import { useNavigate, useParams } from "react-router-dom";
-
-type Plant = {
-  id: string;
-  year: number;
-  plant_type: string;
-  plant_name: string;
-};
+import { usePlants } from "../../hooks/usePlants/usePlants";
 
 export default function SelectPlanterPageContainer() {
-  const [plants, setPlants] = useState<Plant[]>([]);
   const navigate = useNavigate();
   const { plantType } = useParams<{ plantType: string }>();
-
-  useEffect(() => {
-    const fetchPlants = async () => {
-      if (import.meta.env.VITE_USE_MOCK === "true") {
-        setPlants([
-          {
-            id: "mock_1",
-            year: 2026,
-            plant_type: plantType ?? "コマツナ",
-            plant_name: `${plantType}1号`,
-          },
-          {
-            id: "mock_2",
-            year: 2026,
-            plant_type: plantType ?? "コマツナ",
-            plant_name: `${plantType}2号`,
-          },
-        ]);
-        return;
-      }
-      const { data, error } = await supabase
-        .from("plants")
-        .select("*")
-        .eq("plant_type", plantType)
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        console.error("plants取得エラー", error);
-        return;
-      }
-
-      setPlants(data ?? []);
-    };
-
-    fetchPlants();
-  }, [plantType]);
+  const { plants, loading } = usePlants(plantType);
 
   return (
     <Box
@@ -77,8 +33,7 @@ export default function SelectPlanterPageContainer() {
           <BackButton to="/" />
 
           <Box component="footer" sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
-            <Typography variant="h5">コマツナを選択</Typography>{" "}
-            {/* TODO:コマツナの部分はdataから持ってくる*/}
+            <Typography variant="h5">{plantType}を選択</Typography>
             <Typography variant="h5">データの確認をしたい鉢を選択してください</Typography>
           </Box>
 
@@ -108,6 +63,11 @@ export default function SelectPlanterPageContainer() {
           </Box>
         </Container>
       </Box>
+
+      {/* ローディング表示 */}
+      <Backdrop open={loading} sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Box>
   );
 }

@@ -40,3 +40,22 @@
   - 状態管理と副作用を完全に排除し、`usePlantTypes` フックから返される値を受け取るのみの「純粋なUIコンポーネント」に変更。
   - データ取得中の UX を向上するため、`Backdrop` と `CircularProgress` によるローディング画面を導入。
   - Co-location化に伴い、`Header` コンポーネントなどのインポートパスを相対参照の階層を合わせて修正。
+
+### コミット3: usePlants フックの抽出と SelectPlanterPage のリファクタリング
+
+**推奨コミットメッセージ:**
+
+```text
+✨ feat/8: SelectPlanterPage のロジックを usePlants に抽出
+```
+
+**修正内容:**
+
+- **カスタムフックの作成 (`usePlants`)**:
+  - `hooks/usePlants/usePlants.ts` とその仕様書 `usePlants.md` を作成。
+  - URLパラメータ `plantType` に一致する鉢データを Supabase（またはモック）から取得するロジックをフック内部へ隠蔽・抽出。
+- **SelectPlanterPage.tsx のリファクタリング**:
+  - 状態管理・データフェッチ処理を完全にフックへ排出し、純粋なUIレンダラーとしてリファクタリング。
+  - 「コマツナを選択」とハードコードされていた箇所を、URLパラメータに基づき「{plantType}を選択」と動的に表示するように修正（TODOコメントの解消）。
+  - データロード中の UX 改善のため、`Backdrop` + `CircularProgress` のローディングインジケーターを追加。
+  - Co-location化に伴い、`Header` や `BackButton` などのインポートパスを修正。
