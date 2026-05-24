@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs, { type Dayjs } from "dayjs";
 import { getEnvironmentRepository, getPlantsRepository } from "../../api";
-import type {
-  Co2DataPoint,
-  DailyDataPoint,
-  EcData,
-  EnvironmentData,
-} from "../../api/types";
+import type { Co2DataPoint, DailyDataPoint, EcData, EnvironmentData } from "../../api/types";
 
 export type { Co2DataPoint, DailyDataPoint, EcData, EnvironmentData };
 

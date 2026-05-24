@@ -98,15 +98,7 @@ export const useWeeklyEnvironment = (plantName: string | undefined) => {
     return () => {
       cancelled = true;
     };
-  }, [
-    plantId,
-    endDate,
-    soilTempMode,
-    soilMoistureMode,
-    roomTempMode,
-    roomHumidMode,
-    lightMode,
-  ]);
+  }, [plantId, endDate, soilTempMode, soilMoistureMode, roomTempMode, roomHumidMode, lightMode]);
 
   const xTicks7 = useMemo(() => {
     const end = endDate.startOf("day");

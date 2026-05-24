@@ -71,3 +71,18 @@
   - `hooks/usePhotoRecord/usePhotoRecord.ts`: `VITE_USE_MOCK` 分岐と `supabase` 直接参照を削除。植物 ID は `getPlantsRepository()`、写真一覧は `getPhotosRepository()` 経由で取得。スライドショー再生・インデックス操作など UI 状態管理はフック側に維持。
 - **型の再エクスポート**:
   - `PhotoRecord` 型を `api/types.ts` から再エクスポートし、`PhotoViewer` 等の既存インポートパスを維持。
+
+### コミット4: 検証と最終調整
+
+**推奨コミットメッセージ:**
+
+```text
+🔧 fix: feat/9 の Lint / Format 検証と最終調整
+```
+
+**修正内容:**
+
+- **Prettier フォーマット修正**:
+  - CI で失敗していた `api/api.md`・`useDailyEnvironment.ts`・`useWeeklyEnvironment.ts` に `prettier --write` を適用し、`npx prettier --check .` がパスする状態に修正。
+- **記録の完了**:
+  - `changelogs/CHANGELOG_feat9.md` を最終更新し、コミット履歴の全記録を完了。
