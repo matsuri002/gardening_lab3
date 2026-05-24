@@ -99,3 +99,20 @@
 
 - TypeScript ビルドエラーが解決されたことを確認。
 - GitHub Actions (Lint, Format, Build) がすべてパスすることを想定。
+
+### コミット6: DailyRecordPage の Prettier フォーマット修正
+
+**推奨コミットメッセージ:**
+
+```text
+🛠 feat/10: DailyRecordPage の Prettier フォーマット を修正
+```
+
+**修正内容:**
+
+- `frontend/src/pages/DailyRecordPage/DailyRecordPage.tsx` に対して `npx prettier --write` を実行し、コードスタイルを統一。
+
+**検証:**
+
+- Prettier フォーマットチェックが通ることを確認。
+- GitHub Actions (Prettier) がパスすることを想定。

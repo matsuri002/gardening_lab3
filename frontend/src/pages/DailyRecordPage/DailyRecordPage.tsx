@@ -53,10 +53,7 @@ export default function DailyRecordPageContainer() {
         {plantType && <BackButton to={`/select-planter/${plantType}`} />}
       </Stack>
 
-      <DateSelector
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-      />
+      <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
       <Box
         component="main"
