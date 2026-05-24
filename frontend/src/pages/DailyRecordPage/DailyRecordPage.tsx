@@ -56,7 +56,6 @@ export default function DailyRecordPageContainer() {
       <DateSelector
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
-        plantType={plantType}
       />
 
       <Box

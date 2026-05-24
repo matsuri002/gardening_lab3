@@ -7,10 +7,9 @@ import { Dayjs } from "dayjs";
 type Props = {
   selectedDate: Dayjs;
   onDateChange: (date: Dayjs) => void;
-  plantType?: string;
 };
 
-export default function DateSelector({ selectedDate, onDateChange, plantType }: Props) {
+export default function DateSelector({ selectedDate, onDateChange }: Props) {
   return (
     <Box sx={{ ml: 4, mt: 3 }}>
       <LocalizationProvider dateAdapter={AdapterDayjs}>

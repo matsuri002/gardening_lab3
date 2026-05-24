@@ -81,3 +81,21 @@
 - 「日付を選択」が左寄せになり、outline が消えたことを目視で確認。
 - Prettier フォーマットが適用され、コードスタイルが統一されたことを確認。
 - ESLint / Prettier のチェック、ビルドが通ることを想定（CI の GitHub Actions での確認を含む）。
+
+### コミット5: 未使用の plantType プロップを削除
+
+**推奨コミットメッセージ:**
+
+```text
+🛠 feat/10: DateSelector から未使用の plantType プロップを削除
+```
+
+**修正内容:**
+
+- DateSelector の Props から未使用の `plantType` を削除し、TypeScript エラー（TS6133）を解決。
+- RecordTabs と BackButton をページレベルで管理するようになったため、DateSelector では plantType が不要になった。
+
+**検証:**
+
+- TypeScript ビルドエラーが解決されたことを確認。
+- GitHub Actions (Lint, Format, Build) がすべてパスすることを想定。
