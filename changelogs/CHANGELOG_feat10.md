@@ -21,3 +21,23 @@
   - `api/environment/dailyMeasuredAt.ts` に `formatSnapshotMeasuredAt()` を追加。本番取得ロジック（選択日 + 現在時刻の30分丸め）とモックの表示を一致させた。
 - **仕様書の更新**:
   - `EnvironmentSummary.md`・`DailyRecordPage.md` に、計測時刻が選択日の日付を表示することを明記。
+
+### コミット2: 本日の記録の表示領域を一週間・写真画面と同等に修正
+
+**推奨コミットメッセージ:**
+
+```text
+🛠 feat/10: DailyRecordPage のレイアウトを Weekly/Photo と同様に固定フルスクリーン化
+```
+
+**修正内容:**
+
+- `DailyRecordPage` のルート Box に `position: "fixed", inset: 0` を追加し、`minHeight: "100vh"` を削除して画面全体を占有するレイアウトに統一。
+- `main` の Box に `display: "flex"`, `flexDirection: "column"` を追加し、内部の `Container` を `maxWidth={false}` と `disableGutters` に変更、`px/py` を `WeeklyRecordPage`/`PhotoPage` と同じ値に合わせた。
+- これにより「本日の記録」画面の表示領域が「一週間の記録」「写真」画面と同等のフル画面レイアウトになり、表示サイズが小さく見える問題を解消。
+- 関連する仕様書（`DailyRecordPage.md` 等）を必要に応じて更新済み。
+
+**検証:**
+
+- レイアウトの目視確認により、表示領域が週次・写真画面と同等になっていることを確認。
+- ESLint / Prettier 等のフォーマット・リンターチェック、ビルドが通ることを想定（CI の GitHub Actions での確認を含む）。

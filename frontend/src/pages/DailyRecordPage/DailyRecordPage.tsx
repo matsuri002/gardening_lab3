@@ -37,9 +37,10 @@ export default function DailyRecordPageContainer() {
   return (
     <Box
       sx={{
+        position: "fixed",
+        inset: 0,
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
         bgcolor: "background.default",
       }}
     >
@@ -51,8 +52,12 @@ export default function DailyRecordPageContainer() {
         plantType={plantType}
       />
 
-      <Box component="main" sx={{ flexGrow: 1, overflowY: "auto" }}>
-        <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Box component="main" sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}>
+        <Container
+          maxWidth={false}
+          disableGutters
+          sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}
+        >
           <AdviceSection adviceText={adviceText} daysFromStart={daysFromStart} />
 
           <EnvironmentSummary
