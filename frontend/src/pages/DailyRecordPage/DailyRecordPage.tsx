@@ -59,7 +59,10 @@ export default function DailyRecordPageContainer() {
         plantType={plantType}
       />
 
-      <Box component="main" sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}
+      >
         <Container
           maxWidth={false}
           disableGutters

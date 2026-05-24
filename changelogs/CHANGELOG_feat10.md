@@ -53,13 +53,31 @@
 **修正内容:**
 
 - `DailyRecordPage` に `RecordTabs` と `BackButton` を Header の直後に追加し、`WeeklyRecordPage`/`PhotoPage` と同じ Stack レイアウト（direction="row", spacing=15, alignItems="center"）に揃えた。
-- 必要なインポート（RecordTabs, BackButton, Stack）を追加（ページ側に追加）。
+- 必要なインポート（RecordTabs, BackButton, Stack）を追加。
 
-**コミット3 修正内容（追記）:**
+**検証:**
 
-- RecordTabs と BackButton をページレベルで Header の直後に追加。
-- DateSelector 内の重複していた RecordTabs/BackButton を削除。
+- 「本日の記録」画面の戻るボタンが「一週間の記録」と同位置に表示されることを目視で確認。
+- DateSelector 内の重複する RecordTabs/BackButton が正しく削除されたことを確認。
+
+### コミット4: DateSelector の位置・スタイル調整と Prettier フォーマット統一
+
+**推奨コミットメッセージ:**
+
+```text
+🛠 feat/10: DateSelector の位置を左寄せにしスタイルを WeeklyDateSelector と統一
+```
+
+**修正内容:**
+
 - DateSelector のレイアウトを WeeklyDateSelector と同様にシンプル化：
-  - 不要な Stack、空の Box を削除し、` ml: 4, mt: 3` を持つ Box で直接 DatePicker をラップ。
-  - borderBottom・borderColor・bgcolor・padding・size="small" を削除し、スタイルを統一。
+  - 不要な Stack、空の Box、padding を削除し、` ml: 4, mt: 3` を持つ Box で直接 DatePicker をラップ。
+  - borderBottom・borderColor・bgcolor・size="small" を削除し、スタイルを統一。
   - これにより「日付を選択」が左寄せになり、outline（border）も消えます。
+- Prettier による全体的なフォーマット統一を実施。
+
+**検証:**
+
+- 「日付を選択」が左寄せになり、outline が消えたことを目視で確認。
+- Prettier フォーマットが適用され、コードスタイルが統一されたことを確認。
+- ESLint / Prettier のチェック、ビルドが通ることを想定（CI の GitHub Actions での確認を含む）。
