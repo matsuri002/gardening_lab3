@@ -20,13 +20,14 @@ import type {
   WeeklyStatPoint,
 } from "../types";
 import type { EnvironmentSnapshot, IEnvironmentRepository } from "./IEnvironmentRepository";
+import { formatSnapshotMeasuredAt } from "./dailyMeasuredAt";
 import { getMockSensorRange } from "./sensorRanges";
 
 export class MockEnvironmentRepository implements IEnvironmentRepository {
-  async getEnvironmentSnapshot(_plantId: string, _targetDate: Dayjs): Promise<EnvironmentSnapshot> {
+  async getEnvironmentSnapshot(_plantId: string, targetDate: Dayjs): Promise<EnvironmentSnapshot> {
     return {
       envData: generateMockEnvData(),
-      measuredAt: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+      measuredAt: formatSnapshotMeasuredAt(targetDate),
       noDataMessage: null,
     };
   }
@@ -44,8 +45,9 @@ export class MockEnvironmentRepository implements IEnvironmentRepository {
     return generateMockEcData(targetDateStr);
   }
 
-  async getLatestCo2(_plantId: string, _targetDate: Dayjs): Promise<Co2DataPoint> {
-    return { time: dayjs().format("HH:mm"), value: 600 };
+  async getLatestCo2(_plantId: string, targetDate: Dayjs): Promise<Co2DataPoint> {
+    const measuredAt = formatSnapshotMeasuredAt(targetDate);
+    return { time: dayjs(measuredAt).format("HH:mm"), value: 600 };
   }
 
   async getDailyCo2Series(_plantId: string, targetDate: Dayjs): Promise<Co2DataPoint[]> {

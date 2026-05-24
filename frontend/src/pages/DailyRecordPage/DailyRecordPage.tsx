@@ -1,8 +1,10 @@
-import { Box, Container, CircularProgress, Backdrop } from "@mui/material";
+import { Box, Container, CircularProgress, Backdrop, Stack } from "@mui/material";
 import { useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import { useParams } from "react-router-dom";
+import RecordTabs from "../../components/Tab";
 import Header from "../../components/Header";
+import BackButton from "../../components/BackButton";
 import { useDailyEnvironment } from "../../hooks/useDailyEnvironment/useDailyEnvironment";
 import DateSelector from "../../components/DailyRecord/DateSelector/DateSelector";
 import EnvironmentSummary from "../../components/DailyRecord/EnvironmentSummary/EnvironmentSummary";
@@ -37,22 +39,31 @@ export default function DailyRecordPageContainer() {
   return (
     <Box
       sx={{
+        position: "fixed",
+        inset: 0,
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
         bgcolor: "background.default",
       }}
     >
       <Header />
 
-      <DateSelector
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        plantType={plantType}
-      />
+      <Stack direction="row" spacing={15} alignItems="center">
+        <RecordTabs />
+        {plantType && <BackButton to={`/select-planter/${plantType}`} />}
+      </Stack>
 
-      <Box component="main" sx={{ flexGrow: 1, overflowY: "auto" }}>
-        <Container maxWidth="lg" sx={{ py: 3 }}>
+      <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
+
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto" }}
+      >
+        <Container
+          maxWidth={false}
+          disableGutters
+          sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}
+        >
           <AdviceSection adviceText={adviceText} daysFromStart={daysFromStart} />
 
           <EnvironmentSummary
