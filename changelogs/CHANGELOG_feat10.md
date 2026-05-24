@@ -41,3 +41,25 @@
 
 - レイアウトの目視確認により、表示領域が週次・写真画面と同等になっていることを確認。
 - ESLint / Prettier 等のフォーマット・リンターチェック、ビルドが通ることを想定（CI の GitHub Actions での確認を含む）。
+
+### コミット3: 戻るボタンの位置を WeeklyRecordPage と同様に統一
+
+**推奨コミットメッセージ:**
+
+```text
+🛠 feat/10: DailyRecordPage に RecordTabs と BackButton を追加しボタン位置を統一
+```
+
+**修正内容:**
+
+- `DailyRecordPage` に `RecordTabs` と `BackButton` を Header の直後に追加し、`WeeklyRecordPage`/`PhotoPage` と同じ Stack レイアウト（direction="row", spacing=15, alignItems="center"）に揃えた。
+- 必要なインポート（RecordTabs, BackButton, Stack）を追加（ページ側に追加）。
+
+**コミット3 修正内容（追記）:**
+
+- RecordTabs と BackButton をページレベルで Header の直後に追加。
+- DateSelector 内の重複していた RecordTabs/BackButton を削除。
+- DateSelector のレイアウトを WeeklyDateSelector と同様にシンプル化：
+  - 不要な Stack、空の Box を削除し、` ml: 4, mt: 3` を持つ Box で直接 DatePicker をラップ。
+  - borderBottom・borderColor・bgcolor・padding・size="small" を削除し、スタイルを統一。
+  - これにより「日付を選択」が左寄せになり、outline（border）も消えます。
