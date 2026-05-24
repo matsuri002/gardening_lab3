@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
+import { getPlantsRepository } from "../../api";
+import type { PlantType } from "../../api/types";
 
 export function usePlantTypes() {
-  const [plantTypes, setPlantTypes] = useState<string[]>([]);
+  const [plantTypes, setPlantTypes] = useState<PlantType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -11,22 +12,9 @@ export function usePlantTypes() {
       try {
         setLoading(true);
         setError(null);
-
-        if (import.meta.env.VITE_USE_MOCK === "true") {
-          setPlantTypes(["コマツナ", "トマト"]);
-          return;
-        }
-
-        const { data, error: supabaseError } = await supabase.from("plants").select("plant_type");
-
-        if (supabaseError) {
-          throw supabaseError;
-        }
-
-        if (data) {
-          const uniqueTypes = Array.from(new Set(data.map((item) => item.plant_type)));
-          setPlantTypes(uniqueTypes);
-        }
+        const repo = getPlantsRepository();
+        const types = await repo.getPlantTypes();
+        setPlantTypes(types);
       } catch (err) {
         console.error("Failed to fetch plant types:", err);
         setError(err instanceof Error ? err : new Error(String(err)));

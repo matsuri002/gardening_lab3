@@ -1,0 +1,29 @@
+# Gardening Lab 3 - feat/9 修正内容まとめ
+
+このドキュメントは、feat/9「API通信層（Repositoryパターン）の分離とカスタムフックのリファクタリング」における変更内容を逐次記録するものです。
+
+## コミット履歴
+
+### コミット1: PlantsRepository の構築と usePlantTypes・usePlants のリファクタリング
+
+**推奨コミットメッセージ:**
+
+```text
+✨ feat/9: PlantsRepository の構築と usePlantTypes・usePlants のリファクタリング
+```
+
+**修正内容:**
+
+- **API通信層（`src/api/`）の新規構築**:
+  - `api/types.ts` を作成し、`Plant`・`PlantType`・`EnvironmentData`・`PhotoRecord` 等、全体で共通利用するドメイン型をすべてここに集約（各フックやモックジェネレーターから型を移管）。
+  - `api/api.md` を作成し、API通信層の設計方針・ディレクトリ構成・責任範囲を仕様書として定義。
+  - `api/index.ts` にファクトリー関数（`getPlantsRepository()`）を作成。`VITE_USE_MOCK` の判定をこのファイル内にのみ限定し、フックが環境変数を直接知る必要をなくした。
+- **PlantsRepository の実装**:
+  - `api/plants/IPlantsRepository.ts`: `getPlantTypes()`・`getPlants()`・`getPlantIdByName()` の3メソッドを持つインターフェースを定義。
+  - `api/plants/SupabasePlantsRepository.ts`: Supabase の `plants` テーブルを操作する本番用実装を作成。
+  - `api/plants/MockPlantsRepository.ts`: 固定モックデータを返すテスト用実装を作成。
+- **カスタムフックのリファクタリング**:
+  - `hooks/usePlantTypes/usePlantTypes.ts`: `import.meta.env.VITE_USE_MOCK` の条件分岐および `supabase` への直接参照を完全に削除し、`getPlantsRepository()` を経由してデータ取得するよう書き換え。
+  - `hooks/usePlants/usePlants.ts`: 同様に `VITE_USE_MOCK` 分岐と直接参照を削除し、`getPlantsRepository()` を利用するよう書き換え。
+- **型インポートの更新**:
+  - `mocks/generators.ts` が各フックからインポートしていた型定義を、新設した `api/types.ts` からのインポートに変更。生成ロジック自体は変更なし。

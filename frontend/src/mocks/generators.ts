@@ -4,13 +4,11 @@ import type {
   DailyDataPoint,
   EcData,
   Co2DataPoint,
-} from "../hooks/useDailyEnvironment/useDailyEnvironment";
-import type {
   WeeklyStatPoint,
   EcWeeklyPoint,
   Co2WeeklyPoint,
   RawPoint,
-} from "../hooks/useWeeklyEnvironment/useWeeklyEnvironment";
+} from "../api/types";
 
 // --- Utility Functions ---
 const getRandomValue = (min: number, max: number): number => {
