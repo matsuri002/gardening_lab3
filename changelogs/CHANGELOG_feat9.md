@@ -50,3 +50,24 @@
   - `hooks/useWeeklyEnvironment/useWeeklyEnvironment.ts`: 同様に Repository 経由に書き換え。表示モード切替など UI 状態管理はフック側に維持。
 - **型の再エクスポート**:
   - 各フックから `api/types.ts` の型を `export type { ... }` で再エクスポートし、既存コンポーネントのインポートパスを維持。
+
+### コミット3: PhotosRepository の構築と usePhotoRecord のリファクタリング
+
+**推奨コミットメッセージ:**
+
+```text
+✨ feat/9: PhotosRepository の構築と usePhotoRecord のリファクタリング
+```
+
+**修正内容:**
+
+- **PhotosRepository の実装**:
+  - `api/photos/IPhotosRepository.ts`: `getPhotosByPlantId()` メソッドを持つインターフェースを定義（JSDoc 付き）。
+  - `api/photos/SupabasePhotosRepository.ts`: `photos` テーブル取得と Storage の公開 URL 生成を集約。
+  - `api/photos/MockPhotosRepository.ts`: 固定モック写真3枚を返すテスト用実装を作成。
+- **ファクトリー関数の追加**:
+  - `api/index.ts` に `getPhotosRepository()` を追加。
+- **カスタムフックのリファクタリング**:
+  - `hooks/usePhotoRecord/usePhotoRecord.ts`: `VITE_USE_MOCK` 分岐と `supabase` 直接参照を削除。植物 ID は `getPlantsRepository()`、写真一覧は `getPhotosRepository()` 経由で取得。スライドショー再生・インデックス操作など UI 状態管理はフック側に維持。
+- **型の再エクスポート**:
+  - `PhotoRecord` 型を `api/types.ts` から再エクスポートし、`PhotoViewer` 等の既存インポートパスを維持。
