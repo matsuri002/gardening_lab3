@@ -1,3 +1,6 @@
+import type { IEnvironmentRepository } from "./environment/IEnvironmentRepository";
+import { MockEnvironmentRepository } from "./environment/MockEnvironmentRepository";
+import { SupabaseEnvironmentRepository } from "./environment/SupabaseEnvironmentRepository";
 import type { IPlantsRepository } from "./plants/IPlantsRepository";
 import { MockPlantsRepository } from "./plants/MockPlantsRepository";
 import { SupabasePlantsRepository } from "./plants/SupabasePlantsRepository";
@@ -10,4 +13,11 @@ const isMock = import.meta.env.VITE_USE_MOCK === "true";
  */
 export function getPlantsRepository(): IPlantsRepository {
   return isMock ? new MockPlantsRepository() : new SupabasePlantsRepository();
+}
+
+/**
+ * 環境変数 VITE_USE_MOCK に基づき、適切な EnvironmentRepository の実装を返す。
+ */
+export function getEnvironmentRepository(): IEnvironmentRepository {
+  return isMock ? new MockEnvironmentRepository() : new SupabaseEnvironmentRepository();
 }

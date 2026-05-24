@@ -27,3 +27,26 @@
   - `hooks/usePlants/usePlants.ts`: 同様に `VITE_USE_MOCK` 分岐と直接参照を削除し、`getPlantsRepository()` を利用するよう書き換え。
 - **型インポートの更新**:
   - `mocks/generators.ts` が各フックからインポートしていた型定義を、新設した `api/types.ts` からのインポートに変更。生成ロジック自体は変更なし。
+
+### コミット2: EnvironmentRepository の構築と useDailyEnvironment・useWeeklyEnvironment のリファクタリング
+
+**推奨コミットメッセージ:**
+
+```text
+✨ feat/9: EnvironmentRepository の構築と useDailyEnvironment・useWeeklyEnvironment のリファクタリング
+```
+
+**修正内容:**
+
+- **EnvironmentRepository の実装**:
+  - `api/environment/IEnvironmentRepository.ts`: 日次・週次の環境データ取得メソッドを定義。
+  - `api/environment/SupabaseEnvironmentRepository.ts`: `environment_measurements`・`ec_measurements`・`co2_measurements` テーブル操作を集約。
+  - `api/environment/MockEnvironmentRepository.ts`: 既存の `mocks/generators.ts` を利用したモック実装を作成。
+  - `api/environment/sensorRanges.ts`: モック用センサー値レンジの共通定義を抽出。
+- **ファクトリー関数の追加**:
+  - `api/index.ts` に `getEnvironmentRepository()` を追加。
+- **カスタムフックのリファクタリング**:
+  - `hooks/useDailyEnvironment/useDailyEnvironment.ts`: `VITE_USE_MOCK` 分岐と `supabase` 直接参照を削除。植物 ID は `getPlantsRepository()`、環境データは `getEnvironmentRepository()` 経由で取得。
+  - `hooks/useWeeklyEnvironment/useWeeklyEnvironment.ts`: 同様に Repository 経由に書き換え。表示モード切替など UI 状態管理はフック側に維持。
+- **型の再エクスポート**:
+  - 各フックから `api/types.ts` の型を `export type { ... }` で再エクスポートし、既存コンポーネントのインポートパスを維持。
