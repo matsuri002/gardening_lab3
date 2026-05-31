@@ -5,11 +5,13 @@ import { useParams } from "react-router-dom";
 import RecordTabs from "../../components/Tab";
 import Header from "../../components/Header";
 import BackButton from "../../components/BackButton";
+import DateNavigationButtons from "../../components/DateNavigationButtons";
 import { useDailyEnvironment } from "../../hooks/useDailyEnvironment/useDailyEnvironment";
 import DateSelector from "../../components/DailyRecord/DateSelector/DateSelector";
 import EnvironmentSummary from "../../components/DailyRecord/EnvironmentSummary/EnvironmentSummary";
 import AdviceSection from "../../components/DailyRecord/AdviceSection/AdviceSection";
 import DailyCharts from "../../components/DailyRecord/DailyCharts/DailyCharts";
+import { getEnvironmentRepository } from "../../api";
 
 export default function DailyRecordPageContainer() {
   const { plantType, plantName } = useParams<{
@@ -34,7 +36,20 @@ export default function DailyRecordPageContainer() {
     latestCo2,
     adviceText,
     daysFromStart,
+    plantId,
   } = useDailyEnvironment(plantName, selectedDate);
+
+  const handlePlantingDateClick = async () => {
+    if (!plantId) return;
+    const dateStr = await getEnvironmentRepository().getEarliestMeasurementDate(plantId);
+    if (dateStr) setSelectedDate(dayjs(dateStr));
+  };
+
+  const handleLastUpdateDateClick = async () => {
+    if (!plantId) return;
+    const dateStr = await getEnvironmentRepository().getLatestMeasurementDate(plantId);
+    if (dateStr) setSelectedDate(dayjs(dateStr));
+  };
 
   return (
     <Box
@@ -53,7 +68,24 @@ export default function DailyRecordPageContainer() {
         {plantType && <BackButton to={`/select-planter/${plantType}`} />}
       </Stack>
 
-      <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: "center",
+          gap: 2,
+          ml: 4,
+          mt: 3,
+        }}
+      >
+        <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        <DateNavigationButtons
+          onPlantingDateClick={handlePlantingDateClick}
+          onLastUpdateDateClick={handleLastUpdateDateClick}
+          plantingDateDisabled={!plantId}
+          lastUpdateDateDisabled={!plantId}
+        />
+      </Box>
 
       <Box
         component="main"

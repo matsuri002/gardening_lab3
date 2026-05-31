@@ -378,4 +378,28 @@ export class SupabaseEnvironmentRepository implements IEnvironmentRepository {
       return [];
     }
   }
+
+  async getEarliestMeasurementDate(plantId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from("environment_measurements")
+      .select("measured_at")
+      .eq("plant_id", plantId)
+      .order("measured_at", { ascending: true })
+      .limit(1);
+
+    if (error || !data || data.length === 0) return null;
+    return dayjs(data[0].measured_at).format("YYYY-MM-DD");
+  }
+
+  async getLatestMeasurementDate(plantId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from("environment_measurements")
+      .select("measured_at")
+      .eq("plant_id", plantId)
+      .order("measured_at", { ascending: false })
+      .limit(1);
+
+    if (error || !data || data.length === 0) return null;
+    return dayjs(data[0].measured_at).format("YYYY-MM-DD");
+  }
 }
