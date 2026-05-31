@@ -6,6 +6,8 @@ import { useParams } from "react-router-dom";
 import { useWeeklyEnvironment } from "../../hooks/useWeeklyEnvironment/useWeeklyEnvironment";
 import { WeeklyDateSelector } from "../../components/WeeklyRecord/WeeklyDateSelector/WeeklyDateSelector";
 import { WeeklyCharts } from "../../components/WeeklyRecord/WeeklyCharts/WeeklyCharts";
+import { getEnvironmentRepository } from "../../api";
+import dayjs from "dayjs";
 
 export default function WeeklyRecordPageContainer() {
   const { plantType, plantName } = useParams<{
@@ -14,6 +16,18 @@ export default function WeeklyRecordPageContainer() {
   }>();
 
   const env = useWeeklyEnvironment(plantName);
+
+  const handlePlantingDateClick = async () => {
+    if (!env.plantId) return;
+    const dateStr = await getEnvironmentRepository().getEarliestMeasurementDate(env.plantId);
+    if (dateStr) env.setEndDate(dayjs(dateStr));
+  };
+
+  const handleLastUpdateDateClick = async () => {
+    if (!env.plantId) return;
+    const dateStr = await getEnvironmentRepository().getLatestMeasurementDate(env.plantId);
+    if (dateStr) env.setEndDate(dayjs(dateStr));
+  };
 
   return (
     <Box
@@ -41,7 +55,14 @@ export default function WeeklyRecordPageContainer() {
           disableGutters
           sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}
         >
-          <WeeklyDateSelector endDate={env.endDate} onDateChange={env.setEndDate} />
+          <WeeklyDateSelector
+            endDate={env.endDate}
+            onDateChange={env.setEndDate}
+            onPlantingDateClick={handlePlantingDateClick}
+            onLastUpdateDateClick={handleLastUpdateDateClick}
+            plantingDateDisabled={!env.plantId}
+            lastUpdateDateDisabled={!env.plantId}
+          />
           <WeeklyCharts env={env} />
         </Container>
       </Box>

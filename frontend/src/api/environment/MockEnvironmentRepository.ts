@@ -79,4 +79,11 @@ export class MockEnvironmentRepository implements IEnvironmentRepository {
   async getCo2WeeklySeries(_plantId: string, endDate: Dayjs): Promise<Co2WeeklyPoint[]> {
     return generateMockCo2Weekly(endDate);
   }
+  async getEarliestMeasurementDate(_plantId: string): Promise<string | null> {
+    return dayjs().subtract(10, "day").format("YYYY-MM-DD");
+  }
+
+  async getLatestMeasurementDate(_plantId: string): Promise<string | null> {
+    return dayjs().format("YYYY-MM-DD");
+  }
 }

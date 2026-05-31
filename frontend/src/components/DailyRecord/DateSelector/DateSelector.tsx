@@ -11,7 +11,7 @@ type Props = {
 
 export default function DateSelector({ selectedDate, onDateChange }: Props) {
   return (
-    <Box sx={{ ml: 4, mt: 3 }}>
+    <Box>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <DatePicker
           label="日付を選択"
