@@ -85,4 +85,5 @@ export class MockEnvironmentRepository implements IEnvironmentRepository {
 
   async getLatestMeasurementDate(_plantId: string): Promise<string | null> {
     return dayjs().format("YYYY-MM-DD");
-  }}
+  }
+}
