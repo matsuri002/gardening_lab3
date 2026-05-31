@@ -2,7 +2,7 @@
 
 gardening_lab3 のフロントエンド部分です。React + TypeScript + Vite を使用した、レスポンシブなウェブアプリケーションです。
 
-## 🎨 技術スタック
+## 技術スタック
 
 - **React 19**: UI フレームワーク
 - **TypeScript**: 型安全性
@@ -11,12 +11,12 @@ gardening_lab3 のフロントエンド部分です。React + TypeScript + Vite 
 - **Dayjs**: 日時処理
 - その他の詳細は `package.json` を参照
 
-## 📋 前提条件
+## 前提条件
 
 - Node.js 18.x 以上
 - npm 9.x 以上
 
-## 🚀 セットアップ
+## セットアップ
 
 ### 1. 依存パッケージをインストール
 
@@ -41,7 +41,7 @@ npm run dev
 
 開発サーバーが起動し、デフォルトで `http://localhost:5173` で利用可能になります。
 
-## 📁 フォルダ構成
+## フォルダ構成
 
 ```
 src/
@@ -66,7 +66,7 @@ src/
 └── App.tsx              # ルートコンポーネント
 ```
 
-## 🛠️ 開発コマンド
+## 開発コマンド
 
 ```bash
 # 開発サーバーを起動（HMR 有効）
@@ -91,7 +91,7 @@ npm run format
 npm run format:check
 ```
 
-## 🧪 テスト
+## テスト
 
 テストスイートはプロジェクト設定に応じて利用可能：
 
@@ -100,15 +100,15 @@ npm run test
 npm run test:coverage
 ```
 
-## 📱 ページ一覧
+## ページ一覧
 
-| ページ | 説明 |
-|--------|------|
-| DailyRecordPage | 本日の植物の成長記録を入力・表示 |
-| WeeklyRecordPage | 過去1週間の記録をグラフで表示 |
-| PhotoPage | 植物の成長写真を管理 |
+| ページ           | 説明                             |
+| ---------------- | -------------------------------- |
+| DailyRecordPage  | 本日の植物の成長記録を入力・表示 |
+| WeeklyRecordPage | 過去1週間の記録をグラフで表示    |
+| PhotoPage        | 植物の成長写真を管理             |
 
-## 🔌 API 連携
+## API 連携
 
 バックエンド API は `src/api/` に集約：
 
@@ -118,7 +118,7 @@ npm run test:coverage
 
 詳細は [Backend README](../backend/README.md) を参照してください。
 
-## 🎯 コーディング規約
+## コーディング規約
 
 - **コンポーネント**: `PascalCase`（例：`DailyRecordPage.tsx`）
 - **ファイル**: 対応するコンポーネント、またはフィーチャーごとにフォルダ化
@@ -126,7 +126,7 @@ npm run test:coverage
 
 詳細は [docs/standards](../docs/standards/) を参照してください。
 
-## 🚢 ビルド・デプロイ
+## ビルド・デプロイ
 
 ### プロダクション用ビルド
 
@@ -142,7 +142,7 @@ npm run build
 - **Netlify**: ビルドコマンド：`npm run build`、公開フォルダ：`dist/`
 - **その他**: 標準的なスタティックホスティング対応
 
-## 🐛 トラブルシューティング
+## トラブルシューティング
 
 ### 開発サーバーが起動しない
 
@@ -163,17 +163,13 @@ npm run type-check
 npm run lint
 ```
 
-## 🤝 貢献
+## 貢献
 
 Issue や PR の報告・提出は GitHub を使用してください：
 
 - [Issues](https://github.com/matsuri002/gardening_lab3/issues)
 - [Pull Requests](https://github.com/matsuri002/gardening_lab3/pulls)
 
-## 📄 ライセンス
-
-MIT
-
 ---
 
-**最終更新**: 2026-05-24
+**最終更新**: 2026-05-31
