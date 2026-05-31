@@ -26,3 +26,23 @@ feat/12: 栽培開始日・最終更新日へのナビゲーションボタン�
   - 栽培開始日および最終更新日のボタンクリック時に、対応する日付をリポジトリから取得して `selectedDate` の状態を更新するハンドラー関数を実装。
   - `DateSelector` と新設した `DateNavigationButtons` をレスポンシブに並べて配置するフレックスレイアウトを `DailyRecordPage` に適用。
   - レイアウトの調整に伴い、`DateSelector` 内に記述されていた不要な外側マージンを削除。
+
+### コミット2: 一週間の記録（WeeklyRecordPage）における日付ナビゲーションボタン追加
+
+**推奨コミットメッセージ:**
+
+```text
+feat/12: 一週間の記録画面へのナビゲーションボタン追加とレイアウトの統一
+```
+
+**修正内容:**
+
+- **`WeeklyDateSelector` コンポーネントの修正**:
+  - `WeeklyDateSelectorProps` に `onPlantingDateClick`, `onLastUpdateDateClick`, `plantingDateDisabled`, `lastUpdateDateDisabled` のプロップスを追加。
+  - カレンダーピッカー（`DatePicker`）の右隣に新設された `DateNavigationButtons` コンポーネントを配置。
+  - ピッカーとボタンが横並び（モバイル表示時は縦並び）になるようフレックスレイアウトを適用。
+- **「一週間の記録」画面 (`WeeklyRecordPageContainer`) への組み込み**:
+  - 栽培開始日および最終更新日のボタンクリック時に、環境データリポジトリから対応する日付を取得し、`env.setEndDate` を使って一週間の期間終点を更新するハンドラー関数を実装。
+  - 新たなハンドラーと制御プロップスを `WeeklyDateSelector` へ渡すよう設定。
+- **仕様書の更新**:
+  - `frontend/src/pages/WeeklyRecordPage/WeeklyRecordPage.md` を更新し、週次選択におけるクイック遷移ナビゲーションボタンの機能および動作の仕様を明記。
