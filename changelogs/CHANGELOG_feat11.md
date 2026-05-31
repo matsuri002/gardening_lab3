@@ -28,10 +28,25 @@
 **推奨コミットメッセージ:**
 
 ```text
-docs: READMEの修正
+🐛 feat/11: READMEの修正
 ```
 
 **修正内容:**
 
 - **READMEの修正**:
   - READMEに写真や動画などを添付し詳細に記述した
+
+### コミット3: フロントエンドのパイプラインエラーを解消するためのフォーマット修正
+
+**推奨コミットメッセージ:**
+
+```text
+🐛 feat/11: パイプラインエラー対策として各READMEのフォーマット修正および.gitattributesの追加
+```
+
+**修正内容:**
+
+- **各READMEのフォーマット修正**:
+  - `README.md`、`backend/README.md`、`frontend/README.md` に対し `npx prettier --write` を実行し、CI上のフォーマットチェック（`npx prettier --check .`）を通過するよう修正。
+- **改行コード問題の根本解決 (.gitattributes の追加)**:
+  - Windows環境とWSL/CI環境間での改行コード（CRLF / LF）の不一致による Prettier チェックエラー（`endOfLine: lf`）を防ぐため、`.gitattributes` ファイルを新規作成。リポジトリ内の全テキストファイルの改行コードを LF に強制する設定を追加。
