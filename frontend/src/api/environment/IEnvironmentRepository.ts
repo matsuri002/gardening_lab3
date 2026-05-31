@@ -100,4 +100,16 @@ export interface IEnvironmentRepository {
    * @param endDate - 週の終了日
    */
   getCo2WeeklySeries(plantId: string, endDate: Dayjs): Promise<Co2WeeklyPoint[]>;
+
+  /**
+   * 指定植物の最も古い環境データの日付を取得する
+   * @param plantId - 取得対象の植物 ID
+   */
+  getEarliestMeasurementDate(plantId: string): Promise<string | null>;
+
+  /**
+   * 指定植物の最新の環境データの日付を取得する
+   * @param plantId - 取得対象の植物 ID
+   */
+  getLatestMeasurementDate(plantId: string): Promise<string | null>;
 }
